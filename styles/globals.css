@@ -1,0 +1,36 @@
+@tailwind base; 
+@tailwind components; 
+@tailwind utilities;
+
+
+@font-face {
+  font-family: Impact;
+  src: url('../public/fonts/Impact\ Label.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: ImpactReversed;
+  src: url('../public/fonts/Impact\ Label\ Reversed.ttf') format('truetype');
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@layer base {
+  html {
+    @apply  bg-custom-white text-custom-black font-primary;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  /* font-family: Loretto; */
+}
+
+
