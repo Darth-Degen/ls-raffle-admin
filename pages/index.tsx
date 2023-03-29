@@ -1,88 +1,138 @@
 import {
   PageLayout,
-  ConnectButton,
-  WalletButton,
+  AddIcon,
   SpinAnimation,
+  NumberInput,
+  Dropdown,
+  DecimalInput,
 } from "@components";
 import React, { useState } from "react";
 import { NextPage } from "next";
 import { AnimatePresence, motion } from "framer-motion";
-import { fastExitAnimation } from "@constants";
+import { fastExitAnimation, midExitAnimation } from "@constants";
 import { useWallet } from "@solana/wallet-adapter-react";
+
+const currencies = ["sol", "flth", "usdc", "bonk"];
 
 const Home: NextPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [name, setName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
+
+  const [maxTickets, setMaxTickets] = useState<number>(0);
+  const [price, setPrice] = useState<number>(0);
+  const [currencyDropdown, setCurrencyDropdown] = useState<boolean>(false);
+  const [currency, setCurrency] = useState<string>(currencies[0]);
 
   const { disconnect } = useWallet();
 
-  const handleDisconnect = () => {
+  const handleDisconnect = (): void => {
     sessionStorage.clear();
     disconnect();
+  };
+  const handleCurrency = (id: number): void => {
+    setCurrency(currencies[id]);
+    setCurrencyDropdown(false);
   };
 
   return (
     <PageLayout>
       <motion.div
-        className="flex flex-col gap-2 items-center justify-center "
+        className="flex flex-col gap-2 items-center justify-center w-full"
         key="form"
+        {...midExitAnimation}
       >
         {/* sign out */}
-
         <div
-          className="text-sm pt-1.5 text-center underline cursor-pointer absolute top-2 right-4 text-custom-orange"
+          className="text-sm pt-1.5 text-center underline cursor-pointer absolute top-2 right-4 text-teal-400"
           onClick={() => handleDisconnect()}
         >
           sign out
         </div>
 
-        <p>Enter your info below</p>
-        <input
-          type="text"
-          value={name}
-          onInput={(e) =>
-            setName((e.target as HTMLInputElement).value.toLowerCase())
-          }
-          placeholder="Name"
-          className="rounded border-2 outline-custom-pink h-8 px-2"
-        />
-        <input
-          type="email"
-          id="email"
-          name="email"
-          value={email}
-          onInput={(e) =>
-            setEmail((e.target as HTMLInputElement).value.toLowerCase())
-          }
-          placeholder="Email"
-          className="rounded border-2 outline-custom-pink h-8 px-2"
-        />
-        <button
-          className={`relative px-4 py-2 text-2xl rounded-2xl border-2 uppercase bg-custom-white transition-colors duration-300 text-custom-black border-custom-pink hover:text-custom-pink h-[52px] w-[275px]`}
-          onClick={() => alert("click")}
-        >
-          <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div
-                className="flex items-center justify-center"
-                key="spinner"
-                {...fastExitAnimation}
-              >
-                <SpinAnimation color="#e99895" />
-                <p key="connect-btn-loading"></p>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="connect-btn-standard"
-                className=""
-                {...fastExitAnimation}
-              >
-                Get Ticket
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </button>
+        {/*  raffle form */}
+        <div className="flex flex-col gap-6 items-center justify-center pb-32 w-full">
+          <h2 className="text-2xl ">Enter Raffle Info</h2>
+          <div className="flex flex-col lg:flex-row justify-start items-center gap-4 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center border border-teal-500 rounded p-4 cursor-pointer transition-colors duration-300 bg-custom-mid-gray bg-opacity-50 hover:bg-opacity-80">
+                <div className="flex flex-col items-center justify-center w-40 h-40">
+                  <AddIcon width={50} height={50} />
+                </div>
+              </div>
+              <p className="text-sm">Select NFT</p>
+            </div>
+            <div className="flex flex-col gap-3 lg:gap-4 items-start justify-center w-full pb-4">
+              {/* max tickets */}
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs">Max Tickets</p>
+                <NumberInput
+                  max={5000}
+                  handleInput={setMaxTickets}
+                  placeholder="5000"
+                />
+              </div>
+              {/* select currency */}
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs">Select Currency</p>
+                <Dropdown
+                  handleSelect={handleCurrency}
+                  setShowDropdown={setCurrencyDropdown}
+                  showDropdown={currencyDropdown}
+                  label={currency}
+                  items={currencies}
+                />
+              </div>
+              {/* ticket price */}
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs">Ticket Price</p>
+                <DecimalInput
+                  max={1000}
+                  handleInput={setPrice}
+                  placeholder="0.1"
+                />
+              </div>
+              {/* end date */}
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs">End Date & Time</p>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  // value={email}
+                  // onInput={(e) =>
+                  //   setEmail((e.target as HTMLInputElement).value.toLowerCase())
+                  // }
+                  placeholder="01/01/2024"
+                  className="rounded border-2 border-gray-400 h-10 w-40 px-2 bg-custom-dark-gray"
+                />
+              </div>
+            </div>
+          </div>
+          <button
+            className={`transition-colors !w-[200px] h-[48px] duration-300 border-2 text-base lg:text-lg rounded text-gray-400 border-gray-400 hover:border-custom-white hover:text-custom-white`}
+            onClick={() => alert("click")}
+          >
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div
+                  className="flex items-center justify-center"
+                  key="spinner"
+                  {...fastExitAnimation}
+                >
+                  <SpinAnimation color="#fff" />
+                  <p key="connect-btn-loading"> Creating</p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="connect-btn-standard"
+                  className=""
+                  {...fastExitAnimation}
+                >
+                  Create Raffle
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
       </motion.div>
     </PageLayout>
   );

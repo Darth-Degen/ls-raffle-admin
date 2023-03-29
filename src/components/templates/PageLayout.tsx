@@ -103,7 +103,7 @@ const PageLayout: FC<Props> = (props: Props) => {
         className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
       >
         <ConnectButton />
-        <p className="text-xs pt-0.5 opacity-80 text-center text-custom-orange">
+        <p className="text-xs pt-0.5 opacity-80 text-center text-teal-400">
           ledger not supported
         </p>
       </motion.div>
@@ -131,7 +131,7 @@ const PageLayout: FC<Props> = (props: Props) => {
             : "Sign to Verify"}
         </WalletButton>
         <div
-          className="text-xs pt-1.5  text-center  underline cursor-pointer  text-custom-orange"
+          className="text-xs pt-1.5  text-center  underline cursor-pointer  text-teal-400"
           onClick={() => handleDisconnect()}
         >
           sign out

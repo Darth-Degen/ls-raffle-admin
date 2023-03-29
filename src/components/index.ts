@@ -7,8 +7,11 @@ const DiscordIcon = dynamic(()=> import("./@icons/DiscordIcon"))
 const MenuIcon = dynamic(()=> import("./@icons/MenuIcon"))
 const LeftArrowIcon = dynamic(()=> import("./@icons/LeftArrowIcon"))
 const RightArrowIcon = dynamic(()=> import("./@icons/RightArrowIcon"))
+const UploadImageIcon = dynamic(()=> import("./@icons/UploadImageIcon"))
+const AddIcon = dynamic(()=> import("./@icons/AddIcon"))
 //atoms
 const NumberInput = dynamic(()=> import("./atoms/NumberInput"))
+const DecimalInput = dynamic(()=> import("./atoms/DecimalInput"))
 const TextInput = dynamic(()=> import("./atoms/TextInput"))
 const Button = dynamic(()=> import("./atoms/Button"))
 const CheckBox = dynamic(()=> import("./atoms/CheckBox"))
@@ -17,9 +20,12 @@ const LoadCircle = dynamic(()=> import("./atoms/LoadCircle"))
 const ConnectButton = dynamic(() => import("./atoms/ConnectButton"))
 const WalletButton = dynamic(() => import("./atoms/WalletButton"))
 const SpinAnimation = dynamic(() => import("./atoms/SpinAnimation"))
+const DropdownButton = dynamic(()=> import("./atoms/DropdownButton"))
+const DropdownItem = dynamic(()=> import("./atoms/DropdownItem"))
 //molecules
 const PageHead = dynamic(()=> import("./molecules/PageHead"))
 const Logo = dynamic(()=> import("./molecules/Logo"))
+const Dropdown = dynamic(()=> import("./molecules/Dropdown"))
 //organisms
 const Header = dynamic(()=> import("./organisms/Header"))
 const Footer = dynamic(()=> import("./organisms/Footer"))
@@ -46,5 +52,11 @@ export {
   RightArrowIcon,
   ConnectButton,
   WalletButton,
-  SpinAnimation
+  SpinAnimation,
+  UploadImageIcon,
+  AddIcon,
+  Dropdown,
+  DropdownButton,
+  DropdownItem,
+  DecimalInput
 }

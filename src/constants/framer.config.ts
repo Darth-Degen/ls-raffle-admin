@@ -87,10 +87,10 @@ export const backgroundAnimations = {
 
 //dropdown 
 export const dropdownAnimations: Variants = {
-  hidden: { y: -25, opacity: 0 },
+  hidden: { y: -25, opacity: 0, scale: 0.9 },
   show: {
     y: 0,
-    opacity: 1,
+    opacity: 1, scale: 1,
     transition: {
       duration: 0.5,
       // delay: 0.5,
