@@ -25,8 +25,8 @@ const WalletButton: FC<Props> = (props: Props) => {
 
   return (
     <button
-      className={`${className} relative px-4 py-2 text-2xl rounded-2xl border-2 uppercase bg-custom-white  transition-colors duration-300 
-      text-custom-black border-custom-pink hover:text-custom-pink  `}
+      className={`${className} relative transition-colors !w-[200px] duration-300 py-2 border-2 text-base lg:text-lg rounded
+      text-gray-400 border-gray-400 hover:border-custom-white hover:text-custom-white cursor-pointer `}
       {...componentProps}
     >
       <AnimatePresence mode="wait">
@@ -36,7 +36,7 @@ const WalletButton: FC<Props> = (props: Props) => {
             key="spinner"
             {...fastExitAnimation}
           >
-            <SpinAnimation color="#e99895" />
+            <SpinAnimation color="#fff" />
             <p key="connect-btn-loading"> {loadingText}</p>
           </motion.div>
         ) : (

@@ -6,11 +6,12 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        primary: ["ImpactReversed"],
+        primary: ["loretto"],
         secondary: ["Impact"],
       },
       colors: {
         "custom-black": "#121212",
+        "custom-black-2": "#181818",
         "custom-white": "#F5F5F5",
         "custom-red": "#900001",
         "custom-orange": "#c84e3a",

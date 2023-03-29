@@ -4,8 +4,8 @@ import Image from "next/image";
 
 const Header: FC = () => {
   return (
-    <div className="px-4 lg:px-10 py-4 lg:py-8 flex justify-between relative w-full font-primary text-2xl">
-      <Logo />
+    <div className="px-10 py-4 relativel text-center lg:text-start">
+      LIBERTY SQUARE
     </div>
   );
 };

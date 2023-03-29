@@ -7,11 +7,11 @@ const ConnectButton: FC = () => {
 
   return (
     <WalletButton
-      className="relative min-w-[275px] text-custom-black"
+      className="relative min-w-[200px] text-custom-black"
       onClick={() => setVisible(true)}
       loadingText="Connecting"
     >
-      connect wallet
+      Connect Wallet
     </WalletButton>
   );
 };
