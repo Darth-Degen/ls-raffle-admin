@@ -92,7 +92,6 @@ const PageLayout: FC<Props> = (props: Props) => {
     } else if (connected && publicKey) {
       lastPublicKey.current = publicKey;
     }
-    console.log(connected, publicKey);
   }, [connected, publicKey]);
 
   const ConnectWallet = () => {

@@ -20,7 +20,7 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { Toaster } from "react-hot-toast";
 import { getGenesysGoToken, tokenAuthFetchMiddleware } from "src/config/rpc";
 import { Commitment } from "@solana/web3.js";
-
+import "react-datetime/css/react-datetime.css";
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
 

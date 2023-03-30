@@ -3,23 +3,32 @@ import debounce from "lodash.debounce";
 
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
   handleInput: (number: number) => void;
+  useDecimals?: boolean;
 }
 
 const NumberInput: FC<Props> = (props: Props) => {
-  const { handleInput, className, ...componentProps } = props;
+  const {
+    handleInput,
+    useDecimals = false,
+    className,
+    ...componentProps
+  } = props;
   const debouncer = debounce((value) => handleInput(value), 1000);
 
   const max = componentProps.max ?? 1000;
 
   //prevent keys
   const onKeyPress = (event: React.KeyboardEvent): void => {
-    if (!/[0-9]/.test(event.key)) {
+    if (useDecimals && !/[0-9.]/.test(event.key)) {
+      event.preventDefault();
+    } else if (!useDecimals && !/[0-9]/.test(event.key)) {
       event.preventDefault();
     }
   };
 
   //add max length check
   const onInput = (event: React.FormEvent<HTMLInputElement>): void => {
+    console.log("input ", (event.target as HTMLInputElement).value);
     if (Number((event.target as HTMLInputElement).value) > max) {
       (event.target as HTMLInputElement).value = max.toString();
     } else {
@@ -36,7 +45,7 @@ const NumberInput: FC<Props> = (props: Props) => {
         onKeyPress={(e) => onKeyPress(e)}
         onInput={(e) => onInput(e)}
         placeholder={componentProps.placeholder}
-        type={componentProps.type ?? "number"}
+        type={"number"}
         min={1}
         max={max}
         disabled={componentProps.disabled}

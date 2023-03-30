@@ -7,7 +7,7 @@ const ConnectButton: FC = () => {
 
   return (
     <WalletButton
-      className="relative min-w-[200px] text-custom-black"
+      className="relative min-w-[200px]"
       onClick={() => setVisible(true)}
       loadingText="Connecting"
     >

@@ -11,18 +11,32 @@ import { NextPage } from "next";
 import { AnimatePresence, motion } from "framer-motion";
 import { fastExitAnimation, midExitAnimation } from "@constants";
 import { useWallet } from "@solana/wallet-adapter-react";
+import DateTime from "react-datetime";
+import moment, { Moment } from "moment";
 
 const currencies = ["sol", "flth", "usdc", "bonk"];
 
 const Home: NextPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const [maxTickets, setMaxTickets] = useState<number>(0);
-  const [price, setPrice] = useState<number>(0);
+  const [maxTickets, setMaxTickets] = useState<number>();
+  const [price, setPrice] = useState<number>();
   const [currencyDropdown, setCurrencyDropdown] = useState<boolean>(false);
   const [currency, setCurrency] = useState<string>(currencies[0]);
+  const [date, setDate] = useState<string | Moment>();
 
   const { disconnect } = useWallet();
+
+  let inputProps = {
+    placeholder: "01/01/2024 8:00 AM",
+    className:
+      "rounded border-2 border-gray-400 h-10 w-40 px-2 bg-custom-dark-gray focus:outline-teal-600",
+  };
+
+  const isValidDate = (current: any) => {
+    var yesterday = moment().subtract(1, "day");
+    return current.isAfter(yesterday);
+  };
 
   const handleDisconnect = (): void => {
     sessionStorage.clear();
@@ -49,7 +63,7 @@ const Home: NextPage = () => {
         </div>
 
         {/*  raffle form */}
-        <div className="flex flex-col gap-6 items-center justify-center pb-32 w-full">
+        <div className="relative flex flex-col gap-6 items-center justify-center pb-32 w-full">
           <h2 className="text-2xl ">Enter Raffle Info</h2>
           <div className="flex flex-col lg:flex-row justify-start items-center gap-4 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
             <div className="flex flex-col items-center gap-1">
@@ -60,14 +74,14 @@ const Home: NextPage = () => {
               </div>
               <p className="text-sm">Select NFT</p>
             </div>
-            <div className="flex flex-col gap-3 lg:gap-4 items-start justify-center w-full pb-4">
-              {/* max tickets */}
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xs">Max Tickets</p>
-                <NumberInput
-                  max={5000}
-                  handleInput={setMaxTickets}
-                  placeholder="5000"
+            <div className="relative flex flex-col gap-3 lg:gap-4 items-center lg:items-start justify-center w-full pb-4">
+              {/* end date */}
+              <div className="flex flex-col gap-0.5 bg-custom-dark-gray">
+                <p className="text-xs">End Date & Time</p>
+                <DateTime
+                  inputProps={inputProps}
+                  isValidDate={isValidDate}
+                  onChange={(date) => setDate(date)}
                 />
               </div>
               {/* select currency */}
@@ -81,29 +95,34 @@ const Home: NextPage = () => {
                   items={currencies}
                 />
               </div>
+              {/* max tickets */}
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs">Max Tickets</p>
+                <NumberInput
+                  max={5000}
+                  handleInput={setMaxTickets}
+                  placeholder="5000"
+                />
+              </div>
               {/* ticket price */}
               <div className="flex flex-col gap-0.5">
                 <p className="text-xs">Ticket Price</p>
-                <DecimalInput
-                  max={1000}
+                <NumberInput
+                  max={10000}
                   handleInput={setPrice}
                   placeholder="0.1"
+                  useDecimals={true}
                 />
-              </div>
-              {/* end date */}
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xs">End Date & Time</p>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  // value={email}
-                  // onInput={(e) =>
-                  //   setEmail((e.target as HTMLInputElement).value.toLowerCase())
-                  // }
-                  placeholder="01/01/2024"
-                  className="rounded border-2 border-gray-400 h-10 w-40 px-2 bg-custom-dark-gray"
-                />
+                <AnimatePresence mode="wait">
+                  {maxTickets && price && (
+                    <motion.div
+                      className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-white text-sm uppercase w-full text-center"
+                      {...midExitAnimation}
+                    >
+                      {(maxTickets * price).toLocaleString()} {currency}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>

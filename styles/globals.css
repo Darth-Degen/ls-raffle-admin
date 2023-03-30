@@ -37,3 +37,29 @@ input::-webkit-inner-spin-button {
 input[type=number] {
     -moz-appearance:textfield; /* Firefox */
 }
+
+.rdtPicker{
+  border-radius: 4px;
+  border-color: rgb(156 163 175);
+  background: #1f1f1f !important; 
+}
+.rdtDays{
+  background: #1f1f1f;
+  border-radius: 4px;
+  border-color: rgb(156 163 175);
+}
+.rdtPicker td:hover,
+.rdtPicker th:hover,
+.rdtPicker .rdtBtn:hover,
+.rdtPicker .rdtTimeToggle:hover {
+  background: #121212 !important;
+    cursor: pointer;
+}
+/* 
+
+rdtPrev
+
+*/
+/* .rdtPicker > div {
+  
+} */
