@@ -4,7 +4,6 @@ import {
   SpinAnimation,
   NumberInput,
   Dropdown,
-  DecimalInput,
 } from "@components";
 import React, { useState } from "react";
 import { NextPage } from "next";
@@ -13,11 +12,12 @@ import { fastExitAnimation, midExitAnimation } from "@constants";
 import { useWallet } from "@solana/wallet-adapter-react";
 import DateTime from "react-datetime";
 import moment, { Moment } from "moment";
+import { toast } from "react-hot-toast";
 
 const currencies = ["sol", "flth", "usdc", "bonk"];
 
 const Home: NextPage = () => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isCreating, setIsCreating] = useState<boolean>(false);
 
   const [maxTickets, setMaxTickets] = useState<number>();
   const [price, setPrice] = useState<number>();
@@ -29,8 +29,8 @@ const Home: NextPage = () => {
 
   let inputProps = {
     placeholder: "01/01/2024 8:00 AM",
-    className:
-      "rounded border-2 border-gray-400 h-10 w-40 px-2 bg-custom-dark-gray focus:outline-teal-600",
+    class:
+      "rounded border-2 border-gray-400 h-12 lg:h-10 w-44 lg:w-40  px-2 bg-custom-dark-gray focus:outline-teal-600",
   };
 
   const isValidDate = (current: any) => {
@@ -45,6 +45,22 @@ const Home: NextPage = () => {
   const handleCurrency = (id: number): void => {
     setCurrency(currencies[id]);
     setCurrencyDropdown(false);
+  };
+  const handleCreateRaffle = (): void => {
+    console.log(date);
+    if (!date) {
+      toast.error("Select End Date");
+      return;
+    }
+    if (!maxTickets || maxTickets < 1) {
+      toast.error("Add Max Tickets");
+      return;
+    }
+    if (!price || price < 1) {
+      toast.error("Add Ticket Price");
+      return;
+    }
+    setIsCreating(!isCreating);
   };
 
   return (
@@ -64,8 +80,8 @@ const Home: NextPage = () => {
 
         {/*  raffle form */}
         <div className="relative flex flex-col gap-6 items-center justify-center pb-32 w-full">
-          <h2 className="text-2xl ">Enter Raffle Info</h2>
-          <div className="flex flex-col lg:flex-row justify-start items-center gap-4 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
+          <h2 className="text-2xl pt-10 lg:pt-0">Enter Raffle Info</h2>
+          <div className="flex flex-col lg:flex-row justify-start items-center gap-10 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
             <div className="flex flex-col items-center gap-1">
               <div className="flex flex-col items-center border border-teal-500 rounded p-4 cursor-pointer transition-colors duration-300 bg-custom-mid-gray bg-opacity-50 hover:bg-opacity-80">
                 <div className="flex flex-col items-center justify-center w-40 h-40">
@@ -117,7 +133,7 @@ const Home: NextPage = () => {
                   {maxTickets && price && (
                     <motion.div
                       className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-white text-sm uppercase w-full text-center"
-                      {...midExitAnimation}
+                      {...fastExitAnimation}
                     >
                       {(maxTickets * price).toLocaleString()} {currency}
                     </motion.div>
@@ -127,11 +143,11 @@ const Home: NextPage = () => {
             </div>
           </div>
           <button
-            className={`transition-colors !w-[200px] h-[48px] duration-300 border-2 text-base lg:text-lg rounded text-gray-400 border-gray-400 hover:border-custom-white hover:text-custom-white`}
-            onClick={() => alert("click")}
+            className={`transition-colors !w-[200px] h-14 duration-300 border-2 text-base lg:text-lg rounded text-gray-400 border-gray-400 hover:border-custom-white hover:text-custom-white`}
+            onClick={() => handleCreateRaffle()}
           >
             <AnimatePresence mode="wait">
-              {isLoading ? (
+              {isCreating ? (
                 <motion.div
                   className="flex items-center justify-center"
                   key="spinner"

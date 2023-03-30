@@ -26,10 +26,6 @@ const PageLayout: FC<Props> = (props: Props) => {
   const [didMount, setDidMount] = useState<boolean>(false);
   const [isSigning, setIsSigning] = useState<boolean>(false);
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [name, setName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
   const { connected, publicKey, signMessage, disconnect } = useWallet();
   const lastPublicKey = useRef<PublicKey>();
@@ -141,7 +137,7 @@ const PageLayout: FC<Props> = (props: Props) => {
 
   return (
     <motion.div
-      className="relative flex flex-col w-screen min-h-screen justify-between "
+      className="relative flex flex-col w-screen min-h-[80vh] lg:h-screen justify-between "
       {...enterAnimation}
     >
       <PageHead

@@ -11,7 +11,6 @@ const UploadImageIcon = dynamic(()=> import("./@icons/UploadImageIcon"))
 const AddIcon = dynamic(()=> import("./@icons/AddIcon"))
 //atoms
 const NumberInput = dynamic(()=> import("./atoms/NumberInput"))
-const DecimalInput = dynamic(()=> import("./atoms/DecimalInput"))
 const TextInput = dynamic(()=> import("./atoms/TextInput"))
 const Button = dynamic(()=> import("./atoms/Button"))
 const CheckBox = dynamic(()=> import("./atoms/CheckBox"))
@@ -57,6 +56,5 @@ export {
   AddIcon,
   Dropdown,
   DropdownButton,
-  DropdownItem,
-  DecimalInput
+  DropdownItem
 }

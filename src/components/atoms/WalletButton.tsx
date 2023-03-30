@@ -25,7 +25,7 @@ const WalletButton: FC<Props> = (props: Props) => {
 
   return (
     <button
-      className={`${className} relative transition-colors !w-[200px] duration-300 py-2 border-2 text-base lg:text-lg rounded
+      className={`${className} relative transition-colors !w-[200px] h-14 duration-300  border-2 text-base lg:text-lg rounded
       text-gray-400 border-gray-400 hover:border-custom-white hover:text-custom-white cursor-pointer `}
       {...componentProps}
     >

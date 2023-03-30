@@ -63,7 +63,7 @@ const App = ({ Component, pageProps }: AppProps) => {
         <WalletModalProvider>
           <QueryClientProvider client={queryClient}>
             <Component {...pageProps} />
-            <Toaster />
+            <Toaster position="bottom-center" />
           </QueryClientProvider>
         </WalletModalProvider>
       </WalletProvider>
