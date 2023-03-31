@@ -24,6 +24,13 @@ export const tapAnimation = {
   whileTap: { scale: 0.97 },
 }
 
+//hover
+
+export const hoverAnimation = {
+  whileHover: { scale: 1.03 },
+  transition:{ duration: 0.25, ease: "easeInOut" },
+};
+
 //opacity animations
 export const exitAnimation = {
   initial:{ opacity: 0 },
@@ -49,7 +56,12 @@ export const vFastExitAnimation = {
   exit:{ opacity: 0 },
   transition:{ duration: 0.05, ease: "easeInOut" },
 }
-
+export const scaleExitAnimation = {
+  initial:{ opacity: 0, scale: 0.5 },
+  animate:{ opacity: 1, scale: 1 },
+  exit:{ opacity: 0, scale: 0.5 },
+  transition:{ duration: 0.4, ease: "easeInOut" },
+}
 export const enterAnimation = {
   initial:{ opacity: 0 },
   animate:{ opacity: 1 },
