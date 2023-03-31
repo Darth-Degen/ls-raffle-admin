@@ -20,7 +20,7 @@ import {
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Toaster } from "react-hot-toast";
-import { getGenesysGoToken, tokenAuthFetchMiddleware } from "src/config/rpc";
+// import { getGenesysGoToken, tokenAuthFetchMiddleware } from "src/config/rpc";
 import { Commitment } from "@solana/web3.js";
 import "react-datetime/css/react-datetime.css";
 // Default styles that can be overridden by your app
@@ -38,13 +38,12 @@ const App = ({ Component, pageProps }: AppProps) => {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
   const network = WalletAdapterNetwork.Mainnet;
 
-  const endpoint =
-    "https://us-west-1.genesysgo.net/a99fd25a-d5de-4568-a04f-465771a94278";
+  const endpoint = "https://rest-api.hellomoon.io/v0/rpc";
   const config = {
     commitment: "confirmed" as Commitment,
-    fetchMiddleware: tokenAuthFetchMiddleware({
-      getToken: getGenesysGoToken,
-    }),
+    httpHeaders: {
+      "Authorization": "Bearer 3bd84347-2f2a-4be2-9653-bf99cce560c0"
+    }
   };
 
   const wallets = useMemo(
