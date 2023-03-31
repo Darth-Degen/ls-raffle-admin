@@ -161,7 +161,18 @@ const Home: NextPage = () => {
             >
               <div className="flex flex-col items-center border border-teal-500 rounded p-4 cursor-pointer transition-colors duration-300 bg-custom-mid-gray bg-opacity-50 hover:bg-opacity-80">
                 <div className="flex flex-col items-center justify-center w-40 h-40">
-                  <AddIcon width={50} height={50} />
+                  {selected ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      /* @ts-ignore */
+                      src={selected.image}
+                      height={200}
+                      width={200}
+                      alt={selected.name}
+                    />
+                  ) : (
+                    <AddIcon width={50} height={50} />
+                  )}
                 </div>
               </div>
               <p className="text-sm">Select NFT</p>
@@ -231,7 +242,7 @@ const Home: NextPage = () => {
                   {...fastExitAnimation}
                 >
                   <SpinAnimation color="#fff" />
-                  <p key="connect-btn-loading"> Creating</p>
+                  <p key="connect-btn-loading"> Creating Raffle</p>
                 </motion.div>
               ) : (
                 <motion.div
