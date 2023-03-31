@@ -26,6 +26,9 @@ import {
 } from "@metaplex-foundation/js";
 import axios from "axios";
 import { useEffect } from "react";
+import { json } from "stream/consumers";
+
+interface Tokens {}
 
 const currencies = ["sol", "flth", "usdc", "bonk"];
 
@@ -47,7 +50,7 @@ const Home: NextPage = () => {
   let inputProps = {
     placeholder: "01/01/2024 8:00 AM",
     className:
-      "rounded border-2 border-gray-400 h-12 lg:h-10 w-44 lg:w-40  px-2 bg-custom-dark-gray focus:outline-teal-600",
+      "rounded border-2 border-gray-400 h-12 w-44 px-2 bg-custom-dark-gray focus:outline-teal-600",
   };
 
   //verify not past date
@@ -60,6 +63,7 @@ const Home: NextPage = () => {
   const handleDisconnect = (): void => {
     sessionStorage.clear();
     disconnect();
+    if (selected) setSelected(undefined);
   };
 
   //set currency type
@@ -70,7 +74,6 @@ const Home: NextPage = () => {
 
   //create the raffle
   const handleCreateRaffle = (): void => {
-    console.log(date);
     if (!date) {
       toast.error("Select End Date");
       return;
@@ -104,20 +107,27 @@ const Home: NextPage = () => {
       //fetch metadata
       const jsonArr: Metadata[] = [];
       await Promise.all(
-        tokens.map(async (token) => {
+        tokens.map(async (token, index) => {
           const uri = token.uri;
           // console.log(token.name);
-          await axios.get(uri).then((r) => {
-            // console.log(uri, r.data);
-            jsonArr.push(r.data);
-          });
+          try {
+            await axios.get(uri).then((r) => {
+              // console.log(uri, r.data);
+              if (r.data.seller_fee_basis_points) {
+                jsonArr.push(r.data);
+              }
+            });
+          } catch (e: any) {
+            console.error(e.message);
+          }
         })
       );
-      console.log("metadata ", jsonArr);
+      // console.log("> metadata", jsonArr);
+      jsonArr.sort((a, b) => a.name.localeCompare(b.name));
       setMetadata(jsonArr);
       setIsLoading(false);
     } catch (e: any) {
-      console.error("getTokens ", e.message);
+      console.error(e.message);
       setIsLoading(false);
       // setError(true);
     }
@@ -218,10 +228,14 @@ const Home: NextPage = () => {
                   useDecimals={true}
                 />
                 <AnimatePresence mode="wait">
-                  {maxTickets && price && (
+                  {maxTickets && maxTickets > 0 && price && price > 0 && (
                     <motion.div
                       className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-white text-sm uppercase w-full text-center"
-                      {...fastExitAnimation}
+                      key="total"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.1, ease: "easeInOut" }}
                     >
                       {(maxTickets * price).toLocaleString()} {currency}
                     </motion.div>
@@ -276,10 +290,10 @@ const Home: NextPage = () => {
                 className="h-full overflow-y-auto px-8"
                 {...midExitAnimation}
               >
-                <div className="grid grid-cols-4 w-full h-full gap-8 py-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5  4xl:grid-cols-8 w-full h-full gap-8 py-8">
                   {metadata.map((item, index) => (
                     <motion.div
-                      className={`flex flex-col items-center justify-center w-[200px] rounded whitespace-nowrap cursor-pointer border-2 ${
+                      className={`flex flex-col items-center  justify-center rounded  cursor-pointer border-2 ${
                         selected && selected.name === item.name
                           ? "border-teal-500"
                           : "border-gray-400"
@@ -295,7 +309,7 @@ const Home: NextPage = () => {
                         height={200}
                         width={200}
                         alt={item.name}
-                        className={`border-b-2 border-gray-400 ${
+                        className={`w-[200px] h-[200px] object-cover border-b-2 border-gray-400 ${
                           selected && selected.name === item.name
                             ? "border-teal-500"
                             : "border-gray-400"

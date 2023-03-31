@@ -153,9 +153,9 @@ const PageLayout: FC<Props> = (props: Props) => {
             {/* step 2. sign message  */}
             {connected && (
               <motion.div className="" key="content" {...midExitAnimation}>
-                <AnimatePresence mode="wait">
-                  {isAuthorized ? children : <SignMessage />}
-                </AnimatePresence>
+                {/* <AnimatePresence mode="wait"> */}
+                {isAuthorized ? children : <SignMessage />}
+                {/* </AnimatePresence> */}
               </motion.div>
             )}
           </AnimatePresence>

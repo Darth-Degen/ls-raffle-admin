@@ -8,6 +8,8 @@ import {
 } from "@solana/wallet-adapter-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import {
+  BackpackWalletAdapter,
+  BraveWalletAdapter,
   LedgerWalletAdapter,
   PhantomWalletAdapter,
   SlopeWalletAdapter,
@@ -48,8 +50,9 @@ const App = ({ Component, pageProps }: AppProps) => {
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
-      new SlopeWalletAdapter(),
       new SolflareWalletAdapter({ network }),
+      new BackpackWalletAdapter(),
+      new BraveWalletAdapter(),
       new LedgerWalletAdapter(),
       new SolletWalletAdapter({ network }),
       new SolletExtensionWalletAdapter({ network }),
