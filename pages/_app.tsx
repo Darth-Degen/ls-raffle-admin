@@ -21,7 +21,7 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Toaster } from "react-hot-toast";
 // import { getGenesysGoToken, tokenAuthFetchMiddleware } from "src/config/rpc";
-import { Commitment } from "@solana/web3.js";
+import { clusterApiUrl, Commitment } from "@solana/web3.js";
 import "react-datetime/css/react-datetime.css";
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
@@ -36,15 +36,17 @@ export const queryClient = new QueryClient({
 
 const App = ({ Component, pageProps }: AppProps) => {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-  const network = WalletAdapterNetwork.Mainnet;
+  const network = WalletAdapterNetwork.Devnet;
 
-  const endpoint = "https://rest-api.hellomoon.io/v0/rpc";
-  const config = {
-    commitment: "confirmed" as Commitment,
-    httpHeaders: {
-      "Authorization": "Bearer 3bd84347-2f2a-4be2-9653-bf99cce560c0"
-    }
-  };
+  const endpoint = clusterApiUrl(network);
+
+  // const endpoint = "https://rest-api.hellomoon.io/v0/rpc";
+  // const config = {
+  //   commitment: "confirmed" as Commitment,
+  //   httpHeaders: {
+  //     "Authorization": "Bearer 3bd84347-2f2a-4be2-9653-bf99cce560c0"
+  //   }
+  // };
 
   const wallets = useMemo(
     () => [
@@ -60,7 +62,8 @@ const App = ({ Component, pageProps }: AppProps) => {
     [network]
   );
   return (
-    <ConnectionProvider endpoint={endpoint} config={config}>
+    // <ConnectionProvider endpoint={endpoint} config={config}>
+    <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
           <QueryClientProvider client={queryClient}>
