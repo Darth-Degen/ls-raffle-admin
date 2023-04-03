@@ -1,7 +1,7 @@
 import { Connection, Keypair, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Expo } from "./idl/expo";
-import { getMinimumBalanceForRentExemptAccount, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getAssociatedTokenAddress, getMinimumBalanceForRentExemptAccount, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Program } from "@coral-xyz/anchor";
 import { EXPO_PROGRAM_ID } from "src/constants";
 
@@ -36,7 +36,8 @@ export class ExpoClient {
     proceedsMint: PublicKey,
     endTimestamp: anchor.BN,
     ticketPrice: anchor.BN,
-    maxEntrants: number = 500
+    maxEntrants: number = 500,
+    nftMint: PublicKey
   ): Promise<{ signers: Keypair, instructions: TransactionInstruction[] }> {
     let entrantsKeypair = new Keypair();
 
@@ -71,9 +72,34 @@ export class ExpoClient {
       rent: SYSVAR_RENT_PUBKEY
     }).instruction();
 
+    const prizeIndex = 0;
+    const prizeAmount = new anchor.BN(1);
+    const prizeIndexArray = Buffer.from(new Uint32Array([0]).buffer);
+
+    const [prize, _prizeBump] = PublicKey.findProgramAddressSync(
+      [raffle.toBytes(), Buffer.from("prize"), prizeIndexArray],
+      this.expoProgram.programId
+    );
+
+    const createPrizeTokenAccount = await getAssociatedTokenAddress(
+      nftMint,
+      new PublicKey(this.wallet.publicKey)
+    );
+
+    const addPrizeIx = await this.expoProgram.methods.addPrize(prizeIndex, prizeAmount).accounts({
+      raffle,
+      creator: new PublicKey(this.wallet.publicKey),
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+      from: createPrizeTokenAccount,
+      prize,
+      prizeMint: nftMint
+    }).instruction();
+
     return {
       signers: entrantsKeypair,
-      instructions: [createEntrantsIx, createRaffleIx]
+      instructions: [createEntrantsIx, createRaffleIx, addPrizeIx]
     };
   }
 

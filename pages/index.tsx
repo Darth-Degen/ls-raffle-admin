@@ -24,6 +24,8 @@ import {
   FindNftsByOwnerOutput,
   JsonMetadata,
   Metadata,
+  Nft,
+  Sft,
 } from "@metaplex-foundation/js";
 import axios from "axios";
 import { useEffect } from "react";
@@ -51,6 +53,7 @@ const Home: NextPage = () => {
   const [date, setDate] = useState<string | Moment>();
   const [metadata, setMetadata] = useState<Metadata[] | undefined>();
   const [selected, setSelected] = useState<Metadata | undefined>();
+  const [tokens, setTokens] = useState<FindNftsByOwnerOutput | undefined>();
 
   const wallet = useWallet();
   const { publicKey, disconnect } = wallet;
@@ -103,27 +106,41 @@ const Home: NextPage = () => {
       toast.error("Add Ticket Price");
       return;
     }
+    if (!selected || !selected.mintAddress) {
+      console.log('selected:', selected);
+      toast.error("Select a valid NFT");
+      return;
+    }
 
     setIsCreating(true);
 
     const endTimestamp = new anchor.BN(moment(date).unix());
     const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
+    const nftMint = selected?.mintAddress;
 
-    const { signers, instructions } = await expo.createRaffle(
-      new PublicKey(currency.address),
-      endTimestamp,
-      ticketPrice,
-      maxTickets
-    );
 
-    await executeTransaction(
-      connection,
-      wallet,
-      instructions,
-      { signers: [signers] }
-    );
+    try {
+      const { signers, instructions } = await expo.createRaffle(
+        new PublicKey(currency.address),
+        endTimestamp,
+        ticketPrice,
+        maxTickets,
+        nftMint
+      );
 
-    setIsCreating(false);
+      await executeTransaction(
+        connection,
+        wallet,
+        instructions,
+        { signers: [signers] }
+      );
+
+      setIsCreating(false);
+    } catch (e) {
+      console.error(e);
+      toast.error("Something bad happened. Please try again.");
+      setIsCreating(false);
+    }
   };
 
   //handle nft selection
@@ -140,7 +157,9 @@ const Home: NextPage = () => {
       const tokens = await getTokensByOwner(connection, publicKey);
       if (!tokens) return;
 
+      setTokens(tokens);
       console.log("tokens ", tokens);
+
       //fetch metadata
       const jsonArr: Metadata[] = [];
       await Promise.all(
@@ -151,6 +170,8 @@ const Home: NextPage = () => {
             await axios.get(uri).then((r) => {
               // console.log(uri, r.data);
               if (r.data.seller_fee_basis_points) {
+                // @ts-ignore
+                r.data.mintAddress = token.mintAddress;
                 jsonArr.push(r.data);
               }
             });
