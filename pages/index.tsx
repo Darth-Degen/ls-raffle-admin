@@ -10,6 +10,7 @@ import React, { useCallback, useState } from "react";
 import { NextPage } from "next";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  EXPO_PROGRAM_ID,
   fastExitAnimation,
   hoverAnimation,
   midExitAnimation,
@@ -27,25 +28,40 @@ import {
 import axios from "axios";
 import { useEffect } from "react";
 import { json } from "stream/consumers";
+import * as anchor from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
+import { executeTransaction } from "src/lib/transactions";
+import { tokenInfoMap } from "@constants";
+import { ExpoClient } from "src/lib/expo";
+import expoIdlJSON from "src/lib/expo/idl/expo.json";
 
-interface Tokens {}
+interface Tokens { }
 
 const currencies = ["sol", "flth", "usdc", "bonk"];
 
 const Home: NextPage = () => {
+  const tokensKeys = [...tokenInfoMap.keys()];
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [maxTickets, setMaxTickets] = useState<number>();
   const [price, setPrice] = useState<number>();
   const [currencyDropdown, setCurrencyDropdown] = useState<boolean>(false);
-  const [currency, setCurrency] = useState<string>(currencies[0]);
+  const [currency, setCurrency] = useState<any>(tokenInfoMap.get(tokensKeys[0]));
   const [date, setDate] = useState<string | Moment>();
   const [metadata, setMetadata] = useState<Metadata[] | undefined>();
   const [selected, setSelected] = useState<Metadata | undefined>();
 
-  const { publicKey, disconnect } = useWallet();
+  const wallet = useWallet();
+  const { publicKey, disconnect } = wallet;
   const { connection } = useConnection();
+
+  const expo = new ExpoClient(
+    connection,
+    wallet as any,
+    expoIdlJSON as anchor.Idl,
+    EXPO_PROGRAM_ID
+  );
 
   let inputProps = {
     placeholder: "01/01/2024 8:00 AM",
@@ -68,12 +84,13 @@ const Home: NextPage = () => {
 
   //set currency type
   const handleCurrency = (id: number): void => {
-    setCurrency(currencies[id]);
+    const tokensKeys = [...tokenInfoMap.keys()];
+    setCurrency(tokenInfoMap.get(tokensKeys[id]));
     setCurrencyDropdown(false);
   };
 
   //create the raffle
-  const handleCreateRaffle = (): void => {
+  const handleCreateRaffle = async (): Promise<void> => {
     if (!date) {
       toast.error("Select End Date");
       return;
@@ -82,11 +99,31 @@ const Home: NextPage = () => {
       toast.error("Add Max Tickets");
       return;
     }
-    if (!price || price < 1) {
+    if (!price || price < 0.1) {
       toast.error("Add Ticket Price");
       return;
     }
-    setIsCreating(!isCreating);
+
+    setIsCreating(true);
+
+    const endTimestamp = new anchor.BN(moment(date).unix());
+    const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
+
+    const { signers, instructions } = await expo.createRaffle(
+      new PublicKey(currency.address),
+      endTimestamp,
+      ticketPrice,
+      maxTickets
+    );
+
+    await executeTransaction(
+      connection,
+      wallet,
+      instructions,
+      { signers: [signers] }
+    );
+
+    setIsCreating(false);
   };
 
   //handle nft selection
@@ -204,7 +241,7 @@ const Home: NextPage = () => {
                   handleSelect={handleCurrency}
                   setShowDropdown={setCurrencyDropdown}
                   showDropdown={currencyDropdown}
-                  label={currency}
+                  label={currency.symbol}
                   items={currencies}
                 />
               </div>
@@ -236,7 +273,7 @@ const Home: NextPage = () => {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.1, ease: "easeInOut" }}
                     >
-                      {(maxTickets * price).toLocaleString()} {currency}
+                      {(maxTickets * price).toLocaleString()} {currency.symbol}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -292,11 +329,10 @@ const Home: NextPage = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5  4xl:grid-cols-8 w-full h-full gap-8 py-8">
                   {metadata.map((item, index) => (
                     <motion.div
-                      className={`flex flex-col items-center  justify-center rounded  cursor-pointer border-2 ${
-                        selected && selected.name === item.name
-                          ? "border-teal-500"
-                          : "border-gray-400"
-                      }`}
+                      className={`flex flex-col items-center  justify-center rounded  cursor-pointer border-2 ${selected && selected.name === item.name
+                        ? "border-teal-500"
+                        : "border-gray-400"
+                        }`}
                       key={index}
                       onClick={() => handleClick(item)}
                       {...hoverAnimation}
@@ -308,11 +344,10 @@ const Home: NextPage = () => {
                         height={200}
                         width={200}
                         alt={item.name}
-                        className={`w-[200px] h-[200px] object-cover border-b-2 border-gray-400 ${
-                          selected && selected.name === item.name
-                            ? "border-teal-500"
-                            : "border-gray-400"
-                        }`}
+                        className={`w-[200px] h-[200px] object-cover border-b-2 border-gray-400 ${selected && selected.name === item.name
+                          ? "border-teal-500"
+                          : "border-gray-400"
+                          }`}
                       />
                       <p className="text-xs py-3 w-full text-center">
                         {item.name}
