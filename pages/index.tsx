@@ -37,7 +37,7 @@ import { tokenInfoMap } from "@constants";
 import { ExpoClient } from "src/lib/expo";
 import expoIdlJSON from "src/lib/expo/idl/expo.json";
 
-interface Tokens { }
+interface Tokens {}
 
 const currencies = ["sol", "flth", "usdc", "bonk"];
 
@@ -130,17 +130,34 @@ const Home: NextPage = () => {
         nftMint
       );
 
-      await executeTransaction(
+      const status = await executeTransaction(
         connection,
         wallet,
         instructions,
-        { signers: [signers] }
+        {
+          signers: [signers],
+        }
       );
 
+      //@ts-ignore
+      if (status.value.err) {
+        console.warn("Tx status: ", status);
+        toast.error("An error occured. Please try again.");
+      } else {
+        toast.success("Raffle Created", {
+          id: toastId,
+        });
+      }
       setIsCreating(false);
-    } catch (e) {
+    } catch (e: unknown) {
+      toast.error(
+        e instanceof Error ? e.message : "An error occured. Please try again.",
+        {
+          id: toastId,
+        }
+      );
       console.error(e);
-      toast.error("Something bad happened. Please try again.");
+
       setIsCreating(false);
     }
   };
@@ -354,19 +371,21 @@ const Home: NextPage = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5  4xl:grid-cols-8 w-full gap-8 py-8">
                   {metadata.map((item, index) => (
                     <motion.div
-                      className={`flex flex-col items-center  justify-center rounded overflow-hidden  cursor-pointer border-2 ${selected && selected.name === item.name
+                      className={`flex flex-col items-center  justify-center rounded overflow-hidden  cursor-pointer border-2 ${
+                        selected && selected.name === item.name
                           ? "border-teal-500"
                           : "border-gray-400"
-                        }`}
+                      }`}
                       key={index}
                       onClick={() => handleClick(item)}
-                    // {...hoverAnimation}
+                      // {...hoverAnimation}
                     >
                       <div
-                        className={`border-b-2 border-gray-400 overflow-hidden ${selected && selected.name === item.name
+                        className={`border-b-2 border-gray-400 overflow-hidden ${
+                          selected && selected.name === item.name
                             ? "border-teal-500"
                             : "border-gray-400"
-                          }`}
+                        }`}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
