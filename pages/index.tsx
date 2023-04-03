@@ -129,7 +129,6 @@ const Home: NextPage = () => {
     } catch (e: any) {
       console.error(e.message);
       setIsLoading(false);
-      // setError(true);
     }
   }, [connection, publicKey]);
 
@@ -142,7 +141,6 @@ const Home: NextPage = () => {
     if (!connection || !publicKey) {
       setMetadata(undefined);
     }
-    // setError(false);
   }, [connection, publicKey]);
 
   return (
@@ -169,23 +167,24 @@ const Home: NextPage = () => {
               className="flex flex-col items-center gap-1"
               onClick={() => setShowModal(true)}
             >
-              <div className="flex flex-col items-center border border-teal-500 rounded p-4 cursor-pointer transition-colors duration-300 bg-custom-mid-gray bg-opacity-50 hover:bg-opacity-80">
-                <div className="flex flex-col items-center justify-center w-40 h-40">
+              <div className="relative flex flex-col items-center border border-teal-500 rounded p-3 cursor-pointer transition-colors duration-300 bg-custom-mid-gray bg-opacity-50 hover:bg-opacity-80">
+                <div className="relative flex flex-col items-center justify-center w-56 md:w-64 h-56 md:h-64">
                   {selected ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       /* @ts-ignore */
                       src={selected.image}
-                      height={200}
-                      width={200}
+                      height={250}
+                      width={250}
                       alt={selected.name}
+                      className="rounded"
                     />
                   ) : (
                     <AddIcon width={50} height={50} />
                   )}
                 </div>
+                <p className="text-sm absolute -bottom-8 ">Select NFT</p>
               </div>
-              <p className="text-sm">Select NFT</p>
             </div>
             {/* form */}
             <div className="relative flex flex-col gap-3 lg:gap-4 items-center lg:items-start justify-center w-full pb-4">
@@ -274,7 +273,7 @@ const Home: NextPage = () => {
       <Modal show={showModal} close={setShowModal}>
         <div className="flex items-center justify-center w-screen lg:w-[100vh] h-screen lg:h-[70vh] bg-custom-dark-gray px-6 py-12 lg:rounded">
           <AnimatePresence mode="wait">
-            {false && (
+            {isLoading && (
               <motion.div
                 key="load"
                 className="ml-4 flex gap-4"
@@ -284,7 +283,7 @@ const Home: NextPage = () => {
                 <SpinAnimation color="#fff" size={25} />
               </motion.div>
             )}
-            {!false && metadata && metadata.length > 0 && (
+            {!isLoading && metadata && metadata.length > 0 && (
               <motion.div
                 key="tokens"
                 className="h-full overflow-y-auto px-8"
