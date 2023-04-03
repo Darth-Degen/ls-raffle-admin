@@ -49,7 +49,9 @@ const Home: NextPage = () => {
   const [maxTickets, setMaxTickets] = useState<number>();
   const [price, setPrice] = useState<number>();
   const [currencyDropdown, setCurrencyDropdown] = useState<boolean>(false);
-  const [currency, setCurrency] = useState<any>(tokenInfoMap.get(tokensKeys[0]));
+  const [currency, setCurrency] = useState<any>(
+    tokenInfoMap.get(tokensKeys[0])
+  );
   const [date, setDate] = useState<string | Moment>();
   const [metadata, setMetadata] = useState<Metadata[] | undefined>();
   const [selected, setSelected] = useState<Metadata | undefined>();
@@ -102,22 +104,22 @@ const Home: NextPage = () => {
       toast.error("Add Max Tickets");
       return;
     }
+    selected;
     if (!price || price < 0.1) {
       toast.error("Add Ticket Price");
       return;
     }
-    if (!selected || !selected.mintAddress) {
-      console.log('selected:', selected);
-      toast.error("Select a valid NFT");
+    if (!selected) {
+      toast.error("Select NFT");
       return;
     }
 
+    const toastId = toast.loading("Creating raffle...");
     setIsCreating(true);
 
     const endTimestamp = new anchor.BN(moment(date).unix());
     const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
     const nftMint = selected?.mintAddress;
-
 
     try {
       const { signers, instructions } = await expo.createRaffle(
@@ -186,8 +188,9 @@ const Home: NextPage = () => {
       setIsLoading(false);
     } catch (e: any) {
       console.error(e.message);
+
+      toast.error(`Error ${e.message}`);
       setIsLoading(false);
-      // setError(true);
     }
   }, [connection, publicKey]);
 
@@ -200,7 +203,6 @@ const Home: NextPage = () => {
     if (!connection || !publicKey) {
       setMetadata(undefined);
     }
-    // setError(false);
   }, [connection, publicKey]);
 
   return (
@@ -227,23 +229,24 @@ const Home: NextPage = () => {
               className="flex flex-col items-center gap-1"
               onClick={() => setShowModal(true)}
             >
-              <div className="flex flex-col items-center border border-teal-500 rounded p-4 cursor-pointer transition-colors duration-300 bg-custom-mid-gray bg-opacity-50 hover:bg-opacity-80">
-                <div className="flex flex-col items-center justify-center w-40 h-40">
+              <div className="relative flex flex-col items-center border border-teal-500 rounded cursor-pointer transition-colors duration-300 bg-custom-mid-gray bg-opacity-50 hover:bg-opacity-80">
+                <div className="relative flex flex-col items-center justify-center w-56 md:w-72 h-56 md:h-72 overflow-hidden">
                   {selected ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       /* @ts-ignore */
                       src={selected.image}
-                      height={200}
-                      width={200}
+                      height={250}
+                      width={250}
                       alt={selected.name}
+                      className="rounded transition-all duration-500 hover:scale-105"
                     />
                   ) : (
                     <AddIcon width={50} height={50} />
                   )}
                 </div>
+                <p className="text-sm absolute -bottom-8 ">Select NFT</p>
               </div>
-              <p className="text-sm">Select NFT</p>
             </div>
             {/* form */}
             <div className="relative flex flex-col gap-3 lg:gap-4 items-center lg:items-start justify-center w-full pb-4">
@@ -264,7 +267,7 @@ const Home: NextPage = () => {
                   setShowDropdown={setCurrencyDropdown}
                   showDropdown={currencyDropdown}
                   label={currency.symbol}
-                  items={currencies}
+                  items={[...tokenInfoMap.keys()]}
                 />
               </div>
               {/* max tickets */}
@@ -332,7 +335,7 @@ const Home: NextPage = () => {
       <Modal show={showModal} close={setShowModal}>
         <div className="flex items-center justify-center w-screen lg:w-[100vh] h-screen lg:h-[70vh] bg-custom-dark-gray px-6 py-12 lg:rounded">
           <AnimatePresence mode="wait">
-            {false && (
+            {isLoading && (
               <motion.div
                 key="load"
                 className="ml-4 flex gap-4"
@@ -342,36 +345,40 @@ const Home: NextPage = () => {
                 <SpinAnimation color="#fff" size={25} />
               </motion.div>
             )}
-            {!false && metadata && metadata.length > 0 && (
+            {!isLoading && metadata && metadata.length > 0 && (
               <motion.div
                 key="tokens"
                 className="h-full overflow-y-auto px-8"
                 {...midExitAnimation}
               >
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5  4xl:grid-cols-8 w-full h-full gap-8 py-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5  4xl:grid-cols-8 w-full gap-8 py-8">
                   {metadata.map((item, index) => (
                     <motion.div
-                      className={`flex flex-col items-center  justify-center rounded  cursor-pointer border-2 ${selected && selected.name === item.name
-                        ? "border-teal-500"
-                        : "border-gray-400"
+                      className={`flex flex-col items-center  justify-center rounded overflow-hidden  cursor-pointer border-2 ${selected && selected.name === item.name
+                          ? "border-teal-500"
+                          : "border-gray-400"
                         }`}
                       key={index}
                       onClick={() => handleClick(item)}
-                      {...hoverAnimation}
+                    // {...hoverAnimation}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        /* @ts-ignore */
-                        src={item.image}
-                        height={200}
-                        width={200}
-                        alt={item.name}
-                        className={`w-[200px] h-[200px] object-cover border-b-2 border-gray-400 ${selected && selected.name === item.name
-                          ? "border-teal-500"
-                          : "border-gray-400"
+                      <div
+                        className={`border-b-2 border-gray-400 overflow-hidden ${selected && selected.name === item.name
+                            ? "border-teal-500"
+                            : "border-gray-400"
                           }`}
-                      />
-                      <p className="text-xs py-3 w-full text-center">
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          /* @ts-ignore */
+                          src={item.image}
+                          height={200}
+                          width={200}
+                          alt={item.name}
+                          className={`w-[200px] h-[200px] transition-all duration-500 hover:scale-105 object-cover overflow-hidden `}
+                        />
+                      </div>
+                      <p className="text-xs py-3 w-full text-center  ">
                         {item.name}
                       </p>
                     </motion.div>
