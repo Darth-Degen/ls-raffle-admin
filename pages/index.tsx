@@ -35,7 +35,7 @@ import { tokenInfoMap } from "@constants";
 import { ExpoClient } from "src/lib/expo";
 import expoIdlJSON from "src/lib/expo/idl/expo.json";
 
-interface Tokens { }
+interface Tokens {}
 
 const currencies = ["sol", "flth", "usdc", "bonk"];
 
@@ -47,7 +47,9 @@ const Home: NextPage = () => {
   const [maxTickets, setMaxTickets] = useState<number>();
   const [price, setPrice] = useState<number>();
   const [currencyDropdown, setCurrencyDropdown] = useState<boolean>(false);
-  const [currency, setCurrency] = useState<any>(tokenInfoMap.get(tokensKeys[0]));
+  const [currency, setCurrency] = useState<any>(
+    tokenInfoMap.get(tokensKeys[0])
+  );
   const [date, setDate] = useState<string | Moment>();
   const [metadata, setMetadata] = useState<Metadata[] | undefined>();
   const [selected, setSelected] = useState<Metadata | undefined>();
@@ -104,6 +106,7 @@ const Home: NextPage = () => {
       return;
     }
 
+    const toastId = toast.loading("Creating raffle...");
     setIsCreating(true);
 
     const endTimestamp = new anchor.BN(moment(date).unix());
@@ -116,14 +119,14 @@ const Home: NextPage = () => {
       maxTickets
     );
 
-    await executeTransaction(
-      connection,
-      wallet,
-      instructions,
-      { signers: [signers] }
-    );
+    await executeTransaction(connection, wallet, instructions, {
+      signers: [signers],
+    });
 
     setIsCreating(false);
+    toast.success("Success ", {
+      id: toastId,
+    });
   };
 
   //handle nft selection
@@ -165,6 +168,8 @@ const Home: NextPage = () => {
       setIsLoading(false);
     } catch (e: any) {
       console.error(e.message);
+
+      toast.error(`Error ${e.message}`);
       setIsLoading(false);
     }
   }, [connection, publicKey]);
@@ -204,8 +209,8 @@ const Home: NextPage = () => {
               className="flex flex-col items-center gap-1"
               onClick={() => setShowModal(true)}
             >
-              <div className="relative flex flex-col items-center border border-teal-500 rounded p-3 cursor-pointer transition-colors duration-300 bg-custom-mid-gray bg-opacity-50 hover:bg-opacity-80">
-                <div className="relative flex flex-col items-center justify-center w-56 md:w-64 h-56 md:h-64">
+              <div className="relative flex flex-col items-center border border-teal-500 rounded cursor-pointer transition-colors duration-300 bg-custom-mid-gray bg-opacity-50 hover:bg-opacity-80">
+                <div className="relative flex flex-col items-center justify-center w-56 md:w-72 h-56 md:h-72 overflow-hidden">
                   {selected ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
@@ -214,7 +219,7 @@ const Home: NextPage = () => {
                       height={250}
                       width={250}
                       alt={selected.name}
-                      className="rounded"
+                      className="rounded transition-all duration-500 hover:scale-110"
                     />
                   ) : (
                     <AddIcon width={50} height={50} />
@@ -242,7 +247,7 @@ const Home: NextPage = () => {
                   setShowDropdown={setCurrencyDropdown}
                   showDropdown={currencyDropdown}
                   label={currency.symbol}
-                  items={currencies}
+                  items={[...tokenInfoMap.keys()]}
                 />
               </div>
               {/* max tickets */}
@@ -326,16 +331,17 @@ const Home: NextPage = () => {
                 className="h-full overflow-y-auto px-8"
                 {...midExitAnimation}
               >
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5  4xl:grid-cols-8 w-full h-full gap-8 py-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5  4xl:grid-cols-8 w-full gap-8 py-8">
                   {metadata.map((item, index) => (
                     <motion.div
-                      className={`flex flex-col items-center  justify-center rounded  cursor-pointer border-2 ${selected && selected.name === item.name
-                        ? "border-teal-500"
-                        : "border-gray-400"
-                        }`}
+                      className={`flex flex-col items-center  justify-center rounded overflow-hidden  cursor-pointer border-2 ${
+                        selected && selected.name === item.name
+                          ? "border-teal-500"
+                          : "border-gray-400"
+                      }`}
                       key={index}
                       onClick={() => handleClick(item)}
-                      {...hoverAnimation}
+                      // {...hoverAnimation}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -344,12 +350,13 @@ const Home: NextPage = () => {
                         height={200}
                         width={200}
                         alt={item.name}
-                        className={`w-[200px] h-[200px] object-cover border-b-2 border-gray-400 ${selected && selected.name === item.name
-                          ? "border-teal-500"
-                          : "border-gray-400"
-                          }`}
+                        className={`w-[200px] h-[200px] transition-all duration-500 hover:scale-105 object-cover overflow-hidden border-b-2 border-gray-400 ${
+                          selected && selected.name === item.name
+                            ? "border-teal-500"
+                            : "border-gray-400"
+                        }`}
                       />
-                      <p className="text-xs py-3 w-full text-center">
+                      <p className="text-xs py-3 w-full text-center  ">
                         {item.name}
                       </p>
                     </motion.div>
