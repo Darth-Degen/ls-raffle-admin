@@ -101,32 +101,56 @@ const Home: NextPage = () => {
       toast.error("Add Max Tickets");
       return;
     }
+    selected;
     if (!price || price < 0.1) {
       toast.error("Add Ticket Price");
+      return;
+    }
+    if (!selected) {
+      toast.error("Select NFT");
       return;
     }
 
     const toastId = toast.loading("Creating raffle...");
     setIsCreating(true);
 
-    const endTimestamp = new anchor.BN(moment(date).unix());
-    const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
+    try {
+      const endTimestamp = new anchor.BN(moment(date).unix());
+      const ticketPrice = new anchor.BN(
+        price * Math.pow(10, currency.decimals)
+      );
 
-    const { signers, instructions } = await expo.createRaffle(
-      new PublicKey(currency.address),
-      endTimestamp,
-      ticketPrice,
-      maxTickets
-    );
+      const { signers, instructions } = await expo.createRaffle(
+        new PublicKey(currency.address),
+        endTimestamp,
+        ticketPrice,
+        maxTickets
+      );
 
-    await executeTransaction(connection, wallet, instructions, {
-      signers: [signers],
-    });
+      const confirmation = await executeTransaction(
+        connection,
+        wallet,
+        instructions,
+        {
+          signers: [signers],
+        }
+      );
+
+      setIsCreating(false); //TODO: add success/error handling
+      if (confirmation) {
+        toast.success("Success ", {
+          id: toastId,
+        });
+      } else {
+      }
+    } catch (e: any) {
+      setIsCreating(false);
+      toast.error(`Error ${e.message}`, {
+        id: toastId,
+      });
+    }
 
     setIsCreating(false);
-    toast.success("Success ", {
-      id: toastId,
-    });
   };
 
   //handle nft selection
@@ -219,7 +243,7 @@ const Home: NextPage = () => {
                       height={250}
                       width={250}
                       alt={selected.name}
-                      className="rounded transition-all duration-500 hover:scale-110"
+                      className="rounded transition-all duration-500 hover:scale-105"
                     />
                   ) : (
                     <AddIcon width={50} height={50} />
@@ -343,19 +367,23 @@ const Home: NextPage = () => {
                       onClick={() => handleClick(item)}
                       // {...hoverAnimation}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        /* @ts-ignore */
-                        src={item.image}
-                        height={200}
-                        width={200}
-                        alt={item.name}
-                        className={`w-[200px] h-[200px] transition-all duration-500 hover:scale-105 object-cover overflow-hidden border-b-2 border-gray-400 ${
+                      <div
+                        className={`border-b-2 border-gray-400 overflow-hidden ${
                           selected && selected.name === item.name
                             ? "border-teal-500"
                             : "border-gray-400"
                         }`}
-                      />
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          /* @ts-ignore */
+                          src={item.image}
+                          height={200}
+                          width={200}
+                          alt={item.name}
+                          className={`w-[200px] h-[200px] transition-all duration-500 hover:scale-105 object-cover overflow-hidden `}
+                        />
+                      </div>
                       <p className="text-xs py-3 w-full text-center  ">
                         {item.name}
                       </p>
