@@ -188,11 +188,11 @@ const Home: NextPage = () => {
           try {
             await axios.get(uri).then((r) => {
               // console.log(uri, r.data);
-              if (r.data.seller_fee_basis_points) {
-                // @ts-ignore
-                r.data.mintAddress = token.mintAddress;
-                jsonArr.push(r.data);
-              }
+              // if (r.data.seller_fee_basis_points) {
+              // @ts-ignore
+              r.data.mintAddress = token.mintAddress;
+              jsonArr.push(r.data);
+              // }
             });
           } catch (e: any) {
             console.error(e.message);
@@ -362,46 +362,51 @@ const Home: NextPage = () => {
                 <SpinAnimation color="#fff" size={25} />
               </motion.div>
             )}
-            {!isLoading && metadata && metadata.length > 0 && (
+            {!isLoading && (
               <motion.div
                 key="tokens"
                 className="h-full overflow-y-auto px-8"
                 {...midExitAnimation}
               >
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5  4xl:grid-cols-8 w-full gap-8 py-8">
-                  {metadata.map((item, index) => (
-                    <motion.div
-                      className={`flex flex-col items-center  justify-center rounded overflow-hidden  cursor-pointer border-2 ${
-                        selected && selected.name === item.name
-                          ? "border-teal-500"
-                          : "border-gray-400"
-                      }`}
-                      key={index}
-                      onClick={() => handleClick(item)}
-                      // {...hoverAnimation}
-                    >
-                      <div
-                        className={`border-b-2 border-gray-400 overflow-hidden ${
+                  {metadata && metadata.length > 0 ? (
+                    metadata.map((item, index) => (
+                      <motion.div
+                        className={`flex flex-col items-center  justify-center rounded overflow-hidden  cursor-pointer border-2 ${
                           selected && selected.name === item.name
                             ? "border-teal-500"
                             : "border-gray-400"
                         }`}
+                        key={index}
+                        onClick={() => handleClick(item)}
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          /* @ts-ignore */
-                          src={item.image}
-                          height={200}
-                          width={200}
-                          alt={item.name}
-                          className={`w-[200px] h-[200px] transition-all duration-500 hover:scale-105 object-cover overflow-hidden `}
-                        />
-                      </div>
-                      <p className="text-xs py-3 w-full text-center  ">
-                        {item.name}
-                      </p>
-                    </motion.div>
-                  ))}
+                        <div
+                          className={`border-b-2 border-gray-400 overflow-hidden ${
+                            selected && selected.name === item.name
+                              ? "border-teal-500"
+                              : "border-gray-400"
+                          }`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            /* @ts-ignore */
+                            src={item.image}
+                            height={200}
+                            width={200}
+                            alt={item.name}
+                            className={`w-[200px] h-[200px] transition-all duration-500 hover:scale-105 object-cover overflow-hidden `}
+                          />
+                        </div>
+                        <p className="text-xs py-3 w-full text-center  ">
+                          {item.name}
+                        </p>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-3/4">
+                      NO NFT&apos;S FOUND
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
