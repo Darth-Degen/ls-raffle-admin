@@ -305,14 +305,14 @@ const Home: NextPage = () => {
                 <AnimatePresence mode="wait">
                   {maxTickets && maxTickets > 0 && price && price > 0 && (
                     <motion.div
-                      className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-white text-sm w-full text-center"
+                      className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-teal-500 text-base w-full text-center whitespace-nowrap"
                       key="total"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.1, ease: "easeInOut" }}
                     >
-                      Earnings: {(maxTickets * price).toLocaleString()}{" "}
+                      Max Sales - {(maxTickets * price).toLocaleString()}{" "}
                       {currency.symbol}
                     </motion.div>
                   )}
