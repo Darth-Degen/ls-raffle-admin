@@ -5,7 +5,7 @@ interface Props extends SVGProps<SVGSVGElement> {
   size?: number;
 }
 
-const ExpIcon: FC<Props> = (props: Props) => {
+const CloseIcon: FC<Props> = (props: Props) => {
   const { color = "#d1d5db", size = 28 } = props;
   return (
     <svg
@@ -34,4 +34,4 @@ const ExpIcon: FC<Props> = (props: Props) => {
   );
 };
 
-export default ExpIcon;
+export default CloseIcon;

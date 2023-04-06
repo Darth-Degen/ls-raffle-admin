@@ -10,6 +10,7 @@ const RightArrowIcon = dynamic(()=> import("./@icons/RightArrowIcon"))
 const UploadImageIcon = dynamic(()=> import("./@icons/UploadImageIcon"))
 const AddIcon = dynamic(()=> import("./@icons/AddIcon"))
 const CloseIcon = dynamic(()=> import("./@icons/CloseIcon"))
+const CheckIcon = dynamic(()=> import("./@icons/CheckIcon"))
 //atoms
 const NumberInput = dynamic(()=> import("./atoms/NumberInput"))
 const TextInput = dynamic(()=> import("./atoms/TextInput"))
@@ -27,9 +28,11 @@ const PageHead = dynamic(()=> import("./molecules/PageHead"))
 const Logo = dynamic(()=> import("./molecules/Logo"))
 const Dropdown = dynamic(()=> import("./molecules/Dropdown"))
 const Modal = dynamic(()=> import("./molecules/Modal"))
+const SelectToken = dynamic(()=> import("./molecules/SelectToken"))
 //organisms
 const Header = dynamic(()=> import("./organisms/Header"))
 const Footer = dynamic(()=> import("./organisms/Footer"))
+const TokenModal = dynamic(()=> import("./organisms/TokenModal"))
 //templates
 const PageLayout = dynamic(()=> import("./templates/PageLayout"))
 
@@ -60,5 +63,8 @@ export {
   DropdownButton,
   DropdownItem,
   Modal,
-  CloseIcon
+  CloseIcon,
+  TokenModal,
+  SelectToken,
+  CheckIcon
 }

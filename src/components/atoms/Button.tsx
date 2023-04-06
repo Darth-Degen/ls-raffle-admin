@@ -1,35 +1,52 @@
 import { ButtonHTMLAttributes, FC, ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { LoadCircle } from "@components";
+import { LoadCircle, SpinAnimation } from "@components";
+import { fastExitAnimation } from "@constants";
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   isLoading?: boolean;
+  loadText?: string;
 }
 
 const Button: FC<Props> = (props: Props) => {
-  const { children, isLoading = false, className, ...componentProps } = props;
-  const styles: string = "w-40 min-h-[49px] bg-dark text-white text-sm";
+  const {
+    children,
+    isLoading = false,
+    loadText = "",
+    className,
+    ...componentProps
+  } = props;
 
   return (
-    <motion.div
-      whileTap={{ scale: componentProps.disabled ? 1 : 0.99 }}
-      className={`transition-colors duration-200  p-0.5 rounded`}
-    >
+    <motion.div className={`transition-colors duration-200  p-0.5 rounded`}>
       <button
-        className={`${className} ${styles} transition-colors duration-200 relative flex justify-center items-center rounded text-center text-gray-200 p-2 ${
+        className={`transition-colors !w-[200px] h-14 duration-300 border-2 text-base lg:text-lg rounded text-gray-400 border-gray-400  ${
           componentProps.disabled
-            ? "cursor-not-allowed  bg-custom-dark-gray border-custom-dark-gray"
-            : "  "
-        }`}
+            ? "cursor-not-allowed  opacity-20"
+            : "hover:border-custom-white hover:text-custom-white"
+        } ${className} `}
         {...componentProps}
         disabled={componentProps.disabled}
       >
         <AnimatePresence mode="wait">
           {isLoading ? (
-            <LoadCircle color="#f87171" />
+            <motion.div
+              className="flex items-center justify-center ml-2"
+              key="spinner"
+              {...fastExitAnimation}
+            >
+              <SpinAnimation color="#fff" />
+              <p key="connect-btn-loading"> {loadText}</p>
+            </motion.div>
           ) : (
-            <span id="button-text">{children}</span>
+            <motion.div
+              key="connect-btn-standard"
+              className=""
+              {...fastExitAnimation}
+            >
+              {children}
+            </motion.div>
           )}
         </AnimatePresence>
       </button>

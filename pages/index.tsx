@@ -1,20 +1,16 @@
 import {
   PageLayout,
-  AddIcon,
+  Button,
   SpinAnimation,
   NumberInput,
   Dropdown,
-  Modal,
+  TokenModal,
+  SelectToken,
 } from "@components";
 import React, { useCallback, useState } from "react";
 import { NextPage } from "next";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  EXPO_PROGRAM_ID,
-  fastExitAnimation,
-  hoverAnimation,
-  midExitAnimation,
-} from "@constants";
+import { EXPO_PROGRAM_ID, midExitAnimation } from "@constants";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import DateTime from "react-datetime";
 import moment, { Moment } from "moment";
@@ -37,24 +33,25 @@ import { tokenInfoMap } from "@constants";
 import { ExpoClient } from "src/lib/expo";
 import expoIdlJSON from "src/lib/expo/idl/expo.json";
 
-interface Tokens {}
-
-const currencies = ["sol", "flth", "usdc", "bonk"];
-
 const Home: NextPage = () => {
   const tokensKeys = [...tokenInfoMap.keys()];
+
+  //load & show
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showTokenModal, setShowTokenModal] = useState<boolean>(false);
+  //form
   const [maxTickets, setMaxTickets] = useState<number>();
   const [price, setPrice] = useState<number>();
   const [currencyDropdown, setCurrencyDropdown] = useState<boolean>(false);
   const [currency, setCurrency] = useState<any>(
     tokenInfoMap.get(tokensKeys[0])
   );
+  //data
   const [date, setDate] = useState<string | Moment>();
   const [metadata, setMetadata] = useState<Metadata[] | undefined>();
   const [selected, setSelected] = useState<Metadata | undefined>();
+  const [confirmed, setConfirmed] = useState<Metadata | undefined>();
   const [tokens, setTokens] = useState<FindNftsByOwnerOutput | undefined>();
 
   const wallet = useWallet();
@@ -85,6 +82,7 @@ const Home: NextPage = () => {
     sessionStorage.clear();
     disconnect();
     if (selected) setSelected(undefined);
+    if (confirmed) setConfirmed(undefined);
   };
 
   //set currency type
@@ -104,12 +102,11 @@ const Home: NextPage = () => {
       toast.error("Add Max Tickets");
       return;
     }
-    selected;
     if (!price || price < 0.1) {
       toast.error("Add Ticket Price");
       return;
     }
-    if (!selected) {
+    if (!confirmed) {
       toast.error("Select NFT");
       return;
     }
@@ -119,7 +116,7 @@ const Home: NextPage = () => {
 
     const endTimestamp = new anchor.BN(moment(date).unix());
     const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
-    const nftMint = selected?.mintAddress;
+    const nftMint = confirmed?.mintAddress;
 
     try {
       const { signers, instructions } = await expo.createRaffle(
@@ -163,9 +160,17 @@ const Home: NextPage = () => {
   };
 
   //handle nft selection
-  const handleClick = (token: Metadata<JsonMetadata<string>>): void => {
-    console.log(token);
-    setSelected(token);
+  const handleTokenSelect = (
+    token: Metadata<JsonMetadata<string>> | undefined
+  ): void => {
+    console.log("handleTokenSelect ", token);
+    setSelected(token === selected ? undefined : token);
+  };
+
+  //confirm nft selection
+  const handleConfirm = () => {
+    setConfirmed(selected);
+    setShowTokenModal(false);
   };
 
   //fetch user tokens
@@ -174,20 +179,28 @@ const Home: NextPage = () => {
       setIsLoading(true);
       //fetch tokens
       const tokens = await getTokensByOwner(connection, publicKey);
-      if (!tokens) return;
+      if (!tokens) {
+        setIsLoading(false);
+        return;
+      }
+      if (typeof tokens === "string") {
+        setIsLoading(false);
+        toast.error(tokens);
+        return;
+      }
 
       setTokens(tokens);
-      console.log("tokens ", tokens);
+      // console.log("tokens ", tokens);
 
       //fetch metadata
       const jsonArr: Metadata[] = [];
       await Promise.all(
         tokens.map(async (token, index) => {
           const uri = token.uri;
-          // console.log(token.name);
+          console.log(token.uri);
           try {
             await axios.get(uri).then((r) => {
-              // console.log(uri, r.data);
+              // console.log("TOKEN ", uri, r.data);
               // if (r.data.seller_fee_basis_points) {
               // @ts-ignore
               r.data.mintAddress = token.mintAddress;
@@ -222,6 +235,11 @@ const Home: NextPage = () => {
     }
   }, [connection, publicKey]);
 
+  //reset select on modal close
+  useEffect(() => {
+    setSelected(confirmed);
+  }, [confirmed, showTokenModal]);
+
   return (
     <PageLayout>
       <motion.div
@@ -242,29 +260,8 @@ const Home: NextPage = () => {
           <h2 className="text-2xl pt-10 lg:pt-0">Enter Raffle Info</h2>
           <div className="flex flex-col lg:flex-row justify-start items-center gap-10 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
             {/* select nft */}
-            <div
-              className="flex flex-col items-center gap-1"
-              onClick={() => setShowModal(true)}
-            >
-              <div className="relative flex flex-col items-center border border-teal-500 rounded cursor-pointer transition-colors duration-300 bg-custom-mid-gray bg-opacity-50 hover:bg-opacity-80">
-                <div className="relative flex flex-col items-center justify-center w-56 md:w-72 h-56 md:h-72 overflow-hidden">
-                  {selected ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      /* @ts-ignore */
-                      src={selected.image}
-                      height={250}
-                      width={250}
-                      alt={selected.name}
-                      className="rounded transition-all duration-500 hover:scale-105"
-                    />
-                  ) : (
-                    <AddIcon width={50} height={50} />
-                  )}
-                </div>
-                <p className="text-sm absolute -bottom-8 ">Select NFT</p>
-              </div>
-            </div>
+            <SelectToken handleClick={setShowTokenModal} token={confirmed} />
+
             {/* form */}
             <div className="relative flex flex-col gap-3 lg:gap-4 items-center lg:items-start justify-center w-full pb-4">
               {/* end date */}
@@ -308,111 +305,39 @@ const Home: NextPage = () => {
                 <AnimatePresence mode="wait">
                   {maxTickets && maxTickets > 0 && price && price > 0 && (
                     <motion.div
-                      className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-white text-sm uppercase w-full text-center"
+                      className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-white text-sm w-full text-center"
                       key="total"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.1, ease: "easeInOut" }}
                     >
-                      {(maxTickets * price).toLocaleString()} {currency.symbol}
+                      Earnings: {(maxTickets * price).toLocaleString()}{" "}
+                      {currency.symbol}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             </div>
           </div>
-          <button
-            className={`transition-colors !w-[200px] h-14 duration-300 border-2 text-base lg:text-lg rounded text-gray-400 border-gray-400 hover:border-custom-white hover:text-custom-white`}
+          <Button
             onClick={() => handleCreateRaffle()}
+            isLoading={isCreating}
+            loadText={"Creating Raffle"}
           >
-            <AnimatePresence mode="wait">
-              {isCreating ? (
-                <motion.div
-                  className="flex items-center justify-center"
-                  key="spinner"
-                  {...fastExitAnimation}
-                >
-                  <SpinAnimation color="#fff" />
-                  <p key="connect-btn-loading"> Creating Raffle</p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="connect-btn-standard"
-                  className=""
-                  {...fastExitAnimation}
-                >
-                  Create Raffle
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </button>
+            Create Raffle
+          </Button>
         </div>
       </motion.div>
-      <Modal show={showModal} close={setShowModal}>
-        <div className="flex items-center justify-center w-screen lg:w-[100vh] h-screen lg:h-[70vh] bg-custom-dark-gray px-6 py-12 lg:rounded">
-          <AnimatePresence mode="wait">
-            {isLoading && (
-              <motion.div
-                key="load"
-                className="ml-4 flex gap-4"
-                {...midExitAnimation}
-              >
-                Loading NFTs
-                <SpinAnimation color="#fff" size={25} />
-              </motion.div>
-            )}
-            {!isLoading && (
-              <motion.div
-                key="tokens"
-                className="h-full overflow-y-auto px-8"
-                {...midExitAnimation}
-              >
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5  4xl:grid-cols-8 w-full gap-8 py-8">
-                  {metadata && metadata.length > 0 ? (
-                    metadata.map((item, index) => (
-                      <motion.div
-                        className={`flex flex-col items-center  justify-center rounded overflow-hidden  cursor-pointer border-2 ${
-                          selected && selected.name === item.name
-                            ? "border-teal-500"
-                            : "border-gray-400"
-                        }`}
-                        key={index}
-                        onClick={() => handleClick(item)}
-                      >
-                        <div
-                          className={`border-b-2 border-gray-400 overflow-hidden ${
-                            selected && selected.name === item.name
-                              ? "border-teal-500"
-                              : "border-gray-400"
-                          }`}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            /* @ts-ignore */
-                            src={item.image}
-                            height={200}
-                            width={200}
-                            alt={item.name}
-                            className={`w-[200px] h-[200px] transition-all duration-500 hover:scale-105 object-cover overflow-hidden `}
-                          />
-                        </div>
-                        <p className="text-xs py-3 w-full text-center  ">
-                          {item.name}
-                        </p>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-3/4">
-                      NO NFT&apos;S FOUND
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </Modal>
+      <TokenModal
+        show={showTokenModal}
+        setShow={setShowTokenModal}
+        metadata={metadata}
+        selected={selected}
+        isLoading={isLoading}
+        handleClick={handleTokenSelect}
+        handleConfirm={handleConfirm}
+      />
     </PageLayout>
   );
 };
