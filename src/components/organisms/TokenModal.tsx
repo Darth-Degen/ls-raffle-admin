@@ -46,10 +46,10 @@ const TokenModal: FC<Props> = (props: Props) => {
             >
               {metadata && metadata.length > 0 ? (
                 // <div className="flex flex-col items-center justify-between">
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-8 w-full gap-8 py-8 overflow-y-auto">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-8 w-full gap-8 py-8 px-8 overflow-y-auto">
                   {metadata.map((item, index) => (
                     <motion.div
-                      className={`relative flex flex-col items-center  justify-center rounded overflow-hidden cursor-pointer border-2 ${
+                      className={`relative flex flex-col items-center justify-center rounded   cursor-pointer border-2 ${
                         selected && selected.name === item.name
                           ? "border-teal-500"
                           : "border-gray-400"
@@ -67,7 +67,7 @@ const TokenModal: FC<Props> = (props: Props) => {
                             : "border-gray-400"
                         }`}
                       >
-                        <div className=" transition-all duration-500 hover:scale-105 object-cover overflow-hidden h-[200px] w-[200px]">
+                        <div className=" transition-all duration-500 hover:scale-105 object-cover">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             /* @ts-ignore */
@@ -75,7 +75,7 @@ const TokenModal: FC<Props> = (props: Props) => {
                             height={200}
                             width={200}
                             alt={item.name}
-                            className={`object-cover  h-[200px] w-[200px]`}
+                            className={`object-cover`}
                           />
                         </div>
                       </div>
@@ -93,7 +93,7 @@ const TokenModal: FC<Props> = (props: Props) => {
               )}
 
               <Button
-                className="mt-4"
+                className="mt-4 mb-2"
                 disabled={!selected}
                 onClick={handleConfirm}
               >

@@ -33,6 +33,7 @@ const SelectToken = dynamic(()=> import("./molecules/SelectToken"))
 const Header = dynamic(()=> import("./organisms/Header"))
 const Footer = dynamic(()=> import("./organisms/Footer"))
 const TokenModal = dynamic(()=> import("./organisms/TokenModal"))
+const ConfirmModal = dynamic(()=> import("./organisms/ConfirmModal"))
 //templates
 const PageLayout = dynamic(()=> import("./templates/PageLayout"))
 
@@ -66,5 +67,6 @@ export {
   CloseIcon,
   TokenModal,
   SelectToken,
-  CheckIcon
+  CheckIcon,
+  ConfirmModal
 }

@@ -1,7 +1,7 @@
 import {
   PageLayout,
   Button,
-  SpinAnimation,
+  ConfirmModal,
   NumberInput,
   Dropdown,
   TokenModal,
@@ -36,10 +36,11 @@ import expoIdlJSON from "src/lib/expo/idl/expo.json";
 const Home: NextPage = () => {
   const tokensKeys = [...tokenInfoMap.keys()];
 
-  //load & show
+  //load & display modal
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showTokenModal, setShowTokenModal] = useState<boolean>(false);
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   //form
   const [maxTickets, setMaxTickets] = useState<number>();
   const [price, setPrice] = useState<number>();
@@ -50,8 +51,8 @@ const Home: NextPage = () => {
   //data
   const [date, setDate] = useState<string | Moment>();
   const [metadata, setMetadata] = useState<Metadata[] | undefined>();
-  const [selected, setSelected] = useState<Metadata | undefined>();
-  const [confirmed, setConfirmed] = useState<Metadata | undefined>();
+  const [selectedToken, setSelectedToken] = useState<Metadata | undefined>();
+  const [confirmedToken, setConfirmedToken] = useState<Metadata | undefined>();
   const [tokens, setTokens] = useState<FindNftsByOwnerOutput | undefined>();
 
   const wallet = useWallet();
@@ -81,8 +82,8 @@ const Home: NextPage = () => {
   const handleDisconnect = (): void => {
     sessionStorage.clear();
     disconnect();
-    if (selected) setSelected(undefined);
-    if (confirmed) setConfirmed(undefined);
+    if (selectedToken) setSelectedToken(undefined);
+    if (confirmedToken) setConfirmedToken(undefined);
   };
 
   //set currency type
@@ -106,7 +107,7 @@ const Home: NextPage = () => {
       toast.error("Add Ticket Price");
       return;
     }
-    if (!confirmed) {
+    if (!confirmedToken) {
       toast.error("Select NFT");
       return;
     }
@@ -116,7 +117,7 @@ const Home: NextPage = () => {
 
     const endTimestamp = new anchor.BN(moment(date).unix());
     const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
-    const nftMint = confirmed?.mintAddress;
+    const nftMint = confirmedToken?.mintAddress;
 
     try {
       const { signers, instructions } = await expo.createRaffle(
@@ -145,6 +146,7 @@ const Home: NextPage = () => {
           id: toastId,
         });
       }
+      setShowConfirmModal(false);
       setIsCreating(false);
     } catch (e: unknown) {
       toast.error(
@@ -164,16 +166,37 @@ const Home: NextPage = () => {
     token: Metadata<JsonMetadata<string>> | undefined
   ): void => {
     console.log("handleTokenSelect ", token);
-    setSelected(token === selected ? undefined : token);
+    setSelectedToken(token === selectedToken ? undefined : token);
   };
 
   //confirm nft selection
-  const handleConfirm = () => {
-    setConfirmed(selected);
+  const handleConfirmSelection = () => {
+    setConfirmedToken(selectedToken);
     setShowTokenModal(false);
   };
 
-  //fetch user tokens
+  //confirm raffle creation
+  const handleConfirmCreation = () => {
+    if (!date) {
+      toast.error("Select End Date");
+      return;
+    }
+    if (!maxTickets || maxTickets < 1) {
+      toast.error("Add Max Tickets");
+      return;
+    }
+    if (!price || price < 0.1) {
+      toast.error("Add Ticket Price");
+      return;
+    }
+    if (!confirmedToken) {
+      toast.error("Select NFT");
+      return;
+    }
+    setShowConfirmModal(true);
+  };
+
+  //fetch users nfts
   const getTokens = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -237,8 +260,8 @@ const Home: NextPage = () => {
 
   //reset select on modal close
   useEffect(() => {
-    setSelected(confirmed);
-  }, [confirmed, showTokenModal]);
+    setSelectedToken(confirmedToken);
+  }, [confirmedToken, showTokenModal]);
 
   return (
     <PageLayout>
@@ -260,7 +283,10 @@ const Home: NextPage = () => {
           <h2 className="text-2xl pt-10 lg:pt-0">Enter Raffle Info</h2>
           <div className="flex flex-col lg:flex-row justify-start items-center gap-10 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
             {/* select nft */}
-            <SelectToken handleClick={setShowTokenModal} token={confirmed} />
+            <SelectToken
+              handleClick={setShowTokenModal}
+              token={confirmedToken}
+            />
 
             {/* form */}
             <div className="relative flex flex-col gap-3 lg:gap-4 items-center lg:items-start justify-center w-full pb-4">
@@ -321,7 +347,7 @@ const Home: NextPage = () => {
             </div>
           </div>
           <Button
-            onClick={() => handleCreateRaffle()}
+            onClick={handleConfirmCreation}
             isLoading={isCreating}
             loadText={"Creating Raffle"}
           >
@@ -333,10 +359,26 @@ const Home: NextPage = () => {
         show={showTokenModal}
         setShow={setShowTokenModal}
         metadata={metadata}
-        selected={selected}
+        selected={selectedToken}
         isLoading={isLoading}
         handleClick={handleTokenSelect}
-        handleConfirm={handleConfirm}
+        handleConfirm={handleConfirmSelection}
+      />
+      <ConfirmModal
+        show={
+          showConfirmModal &&
+          maxTickets !== undefined &&
+          price !== undefined &&
+          confirmedToken !== undefined
+        }
+        setShow={setShowConfirmModal}
+        isLoading={isCreating}
+        handleClick={handleCreateRaffle}
+        token={confirmedToken}
+        tickets={maxTickets}
+        price={price}
+        currency={currency.name}
+        date={date}
       />
     </PageLayout>
   );
