@@ -53,7 +53,7 @@ const TokenModal: FC<Props> = (props: Props) => {
           {!isLoading && (
             <motion.div
               key="tokens"
-              className="h-full overflow-y-auto  flex flex-col items-center justify-between"
+              className="h-full overflow-y-auto flex flex-col items-center justify-between"
               {...midExitAnimation}
             >
               {metadata && metadata.length > 0 ? (
@@ -61,7 +61,9 @@ const TokenModal: FC<Props> = (props: Props) => {
                   {metadata.map((item, index) => (
                     <motion.div
                       className={`relative flex flex-col items-center justify-between rounded   cursor-pointer border-2 ${
-                        isSelected(item) ? "border-teal-500" : "border-gray-400"
+                        isSelected(item)
+                          ? "border-teal-500 shadow-lg shadow-teal-700"
+                          : "border-gray-400"
                       }`}
                       key={index}
                       onClick={() => handleClick(item)}
@@ -88,7 +90,13 @@ const TokenModal: FC<Props> = (props: Props) => {
                           />
                         </div>
                       </div>
-                      <p className="text-xs py-3 w-full text-center text-ellipsis overflow-hidden border-t-2 border-gray-400 ">
+                      <p
+                        className={`text-xs py-3 w-full text-center text-ellipsis overflow-hidden border-t-2 ${
+                          isSelected(item)
+                            ? "border-teal-500"
+                            : "border-gray-400"
+                        }`}
+                      >
                         {item.name}
                       </p>
                     </motion.div>

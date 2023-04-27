@@ -9,7 +9,7 @@ interface Props {
   setShow: Dispatch<SetStateAction<boolean>>;
   isLoading: boolean;
   handleClick: () => void;
-  token: Metadata<JsonMetadata<string>> | undefined;
+  tokens: Metadata[];
   tickets: number | undefined;
   price: number | undefined;
   currency: string;
@@ -22,21 +22,28 @@ const ConfirmModal: FC<Props> = (props: Props) => {
     setShow,
     isLoading,
     handleClick,
-    token,
+    tokens,
     tickets,
     price,
     currency,
     date,
   } = props;
-
+  console.log("tokens ", tokens);
   return (
     <Modal show={show} close={setShow}>
       <div className="flex flex-col gap-8 items-center justify-between w-screen lg:w-auto h-screen lg:h-auto bg-custom-dark-gray px-20 py-14  lg:rounded">
         <h2 className="text-2xl px-10">Confirm Raffle Data </h2>
         <div className="flex flex-col text-lg">
           <div className="flex justify-between gap-8">
-            <p>Selected NFT</p>
-            <p className="text-teal-500">{token?.name}</p>
+            <p>Selected NFTs</p>
+            <div className="flex flex-col">
+              {tokens &&
+                tokens.map((token, index) => (
+                  <p className="text-teal-500 leading-6" key={index}>
+                    {token.name}
+                  </p>
+                ))}
+            </div>
           </div>
 
           <div className="flex justify-between gap-8">

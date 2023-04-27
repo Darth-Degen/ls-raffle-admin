@@ -117,8 +117,8 @@ const Home: NextPage = () => {
 
     const endTimestamp = new anchor.BN(moment(date).unix());
     const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
-    //TODO: update for use with multiple tokens
-    const nftMint = confirmedToken?.mintAddress;
+    //TODO: update for use with multiple tokens instead of first instance
+    const nftMint = confirmedToken[0]?.mintAddress;
 
     try {
       const { signers, instructions } = await expo.createRaffle(
@@ -387,7 +387,7 @@ const Home: NextPage = () => {
         setShow={setShowConfirmModal}
         isLoading={isCreating}
         handleClick={handleCreateRaffle}
-        token={confirmedToken}
+        tokens={confirmedToken}
         tickets={maxTickets}
         price={price}
         currency={currency.name}
