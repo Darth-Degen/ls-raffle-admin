@@ -51,8 +51,8 @@ const Home: NextPage = () => {
   //data
   const [date, setDate] = useState<string | Moment>();
   const [metadata, setMetadata] = useState<Metadata[] | undefined>();
-  const [selectedToken, setSelectedToken] = useState<Metadata | undefined>();
-  const [confirmedToken, setConfirmedToken] = useState<Metadata | undefined>();
+  const [selectedToken, setSelectedToken] = useState<Metadata[]>([]);
+  const [confirmedToken, setConfirmedToken] = useState<Metadata[]>([]);
   const [tokens, setTokens] = useState<FindNftsByOwnerOutput | undefined>();
 
   const wallet = useWallet();
@@ -82,8 +82,8 @@ const Home: NextPage = () => {
   const handleDisconnect = (): void => {
     sessionStorage.clear();
     disconnect();
-    if (selectedToken) setSelectedToken(undefined);
-    if (confirmedToken) setConfirmedToken(undefined);
+    if (selectedToken) setSelectedToken([]);
+    if (confirmedToken) setConfirmedToken([]);
   };
 
   //set currency type
@@ -117,6 +117,7 @@ const Home: NextPage = () => {
 
     const endTimestamp = new anchor.BN(moment(date).unix());
     const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
+    //TODO: update for use with multiple tokens
     const nftMint = confirmedToken?.mintAddress;
 
     try {
@@ -162,11 +163,25 @@ const Home: NextPage = () => {
   };
 
   //handle nft selection
-  const handleTokenSelect = (
-    token: Metadata<JsonMetadata<string>> | undefined
-  ): void => {
-    console.log("handleTokenSelect ", token);
-    setSelectedToken(token === selectedToken ? undefined : token);
+  const handleTokenSelect = (token: Metadata<JsonMetadata<string>>): void => {
+    if (!token) return;
+    let isDuplicate = false;
+    //check for duplicates
+    selectedToken.find((item) => {
+      if (item?.mintAddress.toBase58() === token?.mintAddress.toBase58()) {
+        isDuplicate = true;
+      }
+    });
+    //add
+    if (!isDuplicate) setSelectedToken([...selectedToken, token]);
+    //remove
+    else
+      setSelectedToken((prevState) => {
+        return prevState.filter(
+          (item) =>
+            item?.mintAddress.toBase58() !== token?.mintAddress.toBase58()
+        );
+      });
   };
 
   //confirm nft selection
@@ -198,6 +213,8 @@ const Home: NextPage = () => {
 
   //fetch users nfts
   const getTokens = useCallback(async () => {
+    if (!showTokenModal || !connection || !publicKey) return;
+
     try {
       setIsLoading(true);
       //fetch tokens
@@ -220,22 +237,18 @@ const Home: NextPage = () => {
       await Promise.all(
         tokens.map(async (token, index) => {
           const uri = token.uri;
-          console.log(token.uri);
           try {
             await axios.get(uri).then((r) => {
-              // console.log("TOKEN ", uri, r.data);
-              // if (r.data.seller_fee_basis_points) {
               // @ts-ignore
               r.data.mintAddress = token.mintAddress;
               jsonArr.push(r.data);
-              // }
             });
           } catch (e: any) {
             console.error(e.message);
           }
         })
       );
-      // console.log("> metadata", jsonArr);
+      // console.log("metadata", jsonArr);
       jsonArr.sort((a, b) => a.name.localeCompare(b.name));
       setMetadata(jsonArr);
       setIsLoading(false);
@@ -245,7 +258,7 @@ const Home: NextPage = () => {
       toast.error(`Error ${e.message}`);
       setIsLoading(false);
     }
-  }, [connection, publicKey]);
+  }, [connection, publicKey, showTokenModal]);
 
   useEffect(() => {
     getTokens();
@@ -285,7 +298,7 @@ const Home: NextPage = () => {
             {/* select nft */}
             <SelectToken
               handleClick={setShowTokenModal}
-              token={confirmedToken}
+              tokens={confirmedToken}
             />
 
             {/* form */}
