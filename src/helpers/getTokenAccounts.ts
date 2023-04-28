@@ -1,8 +1,8 @@
 
 import { Connection, GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
- //read nft mint address from wallet
-export const getTokenAccounts = async (connection: Connection, publicKey:PublicKey )  => {
+//read nft mint address from wallet
+export const getTokenAccounts = async (connection: Connection, publicKey: PublicKey) => {
 
   if (!publicKey || !connection) return;
 
@@ -10,8 +10,9 @@ export const getTokenAccounts = async (connection: Connection, publicKey:PublicK
     // const mx = Metaplex.make(connection);
     // const tokens = await mx.nfts().findAllByOwner({ owner: new PublicKey(publicKey) });
     const wallet = publicKey?.toBase58();
-    const rpcEndpoint =
-      "https://bold-cosmological-daylight.solana-mainnet.discover.quiknode.pro/d6b580eb3a983f95fece05b014d36fe7708d9dea/";
+    // const rpcEndpoint =
+    //   "https://bold-cosmological-daylight.solana-mainnet.discover.quiknode.pro/d6b580eb3a983f95fece05b014d36fe7708d9dea/";
+    const rpcEndpoint = "https://api.devnet.solana.com";
     const solanaConnection = new Connection(rpcEndpoint);
     const filters: GetProgramAccountsFilter[] = [
       {
@@ -25,7 +26,7 @@ export const getTokenAccounts = async (connection: Connection, publicKey:PublicK
       },
     ];
     let accounts = await solanaConnection.getParsedProgramAccounts(
-      TOKEN_PROGRAM_ID, 
+      TOKEN_PROGRAM_ID,
       { filters: filters }
     );
     console.log(
@@ -38,7 +39,7 @@ export const getTokenAccounts = async (connection: Connection, publicKey:PublicK
       const tokenBalance: number =
         parsedAccountInfo["parsed"]["info"]["tokenAmount"]["uiAmount"];
       //Log results
-      if (tokenBalance > 1){
+      if (tokenBalance > 1) {
         // console.log(`Token Account No. ${i + 1}: ${account.pubkey.toString()}`);
         // console.log(`--Token Mint: ${mintAddress}`);
         // console.log(`--Token Balance: ${tokenBalance}`);
@@ -49,7 +50,7 @@ export const getTokenAccounts = async (connection: Connection, publicKey:PublicK
     return accounts;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unable to load spl tokens"
-    console.error("getTokenAccounts ",   message);
+    console.error("getTokenAccounts ", message);
     return message;
   }
 };  
