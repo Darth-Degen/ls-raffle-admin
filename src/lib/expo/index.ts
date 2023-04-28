@@ -53,7 +53,7 @@ export class ExpoClient {
       this.expoProgram.programId
     );
 
-    let entrantsAccountSize = 8 + 4 + 4 + 32 * maxEntrants;
+    let entrantsAccountSize = 8 + 4 + 4 + (32 * maxEntrants);
 
     const createEntrantsIx = SystemProgram.createAccount({
       fromPubkey: new PublicKey(this.wallet.publicKey),
