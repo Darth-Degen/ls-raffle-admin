@@ -400,6 +400,7 @@ const Home: NextPage = () => {
                     handleSelect={handleSplSelect}
                     setShowDropdown={setSplDropdown}
                     showDropdown={splDropdown}
+                    //@ts-ignore
                     label={selectedSpl?.mint ?? noSplLabel}
                     items={
                       splMap ? [noSplLabel, ...splMap.keys()] : [noSplLabel]
