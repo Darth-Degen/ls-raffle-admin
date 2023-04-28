@@ -53,7 +53,8 @@ const Home: NextPage = () => {
   const [selectedToken, setSelectedToken] = useState<Metadata[]>([]);
   const [confirmedToken, setConfirmedToken] = useState<Metadata[]>([]);
   const [splMap, setSplMap] = useState<Map<string, any>>();
-  const [selectedSpl, setSelectedSpl] = useState<Map<string, any>>();
+  const [selectedSpl, setSelectedSpl] = useState<any>();
+  const [splAmount, setSplAmount] = useState<number>();
 
   const wallet = useWallet();
   const { publicKey, disconnect } = wallet;
@@ -105,10 +106,12 @@ const Home: NextPage = () => {
       splKeys[id - 1],
       splMap.get(splKeys[id - 1])
     );
-    // setSelectedSpl(splMap.get(splKeys[id]))
+    if (splMap.get(splKeys[id - 1])) {
+      setSelectedSpl(splMap.get(splKeys[id - 1]));
+      setSplDropdown(false);
+    }
     // console.log("id ", splMap?.get());
     // setSelectedSpl(splMap?.get());
-    setSplDropdown(false);
   };
 
   //create the raffle
@@ -121,11 +124,11 @@ const Home: NextPage = () => {
       toast.error("Add Max Tickets");
       return;
     }
-    if (!price || price < 0.1) {
+    if (!price || price < 0.001) {
       toast.error("Add Ticket Price");
       return;
     }
-    if (!confirmedToken) {
+    if (!confirmedToken.length) {
       toast.error("Select NFT");
       return;
     }
@@ -136,7 +139,11 @@ const Home: NextPage = () => {
     const endTimestamp = new anchor.BN(moment(date).unix());
     const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
     //TODO: update for use with multiple tokens instead of first instance
-    const nftMint = confirmedToken[0]?.mintAddress;
+    // const nftMint = confirmedToken[0]?.mintAddress;
+    const nftMints = confirmedToken.map(token => token.mintAddress);
+    const splFinalAmount = splAmount
+      ? new anchor.BN(splAmount * Math.pow(10, selectedSpl.tokenAmount.decimals))
+      : new anchor.BN(0);
 
     try {
       const { signers, instructions } = await expo.createRaffle(
@@ -144,7 +151,9 @@ const Home: NextPage = () => {
         endTimestamp,
         ticketPrice,
         maxTickets,
-        nftMint
+        nftMints,
+        selectedSpl.mint,
+        splFinalAmount
       );
 
       const status = await executeTransaction(
@@ -218,7 +227,7 @@ const Home: NextPage = () => {
       toast.error("Add Max Tickets");
       return;
     }
-    if (!price || price < 0.1) {
+    if (!price || price < 0.001) {
       toast.error("Add Ticket Price");
       return;
     }
@@ -281,6 +290,8 @@ const Home: NextPage = () => {
   const getSPLTokens = useCallback(async () => {
     if (!publicKey) return;
     const _tokens = await getTokenAccounts(connection, publicKey);
+
+    console.log('TOKENS: ', _tokens);
 
     if (_tokens && typeof _tokens !== "string") {
       //create new data map
@@ -410,9 +421,9 @@ const Home: NextPage = () => {
                 <InputWrapper label="SPL Quantity">
                   <NumberInput
                     max={5000}
-                    handleInput={setMaxTickets}
+                    handleInput={setSplAmount}
                     placeholder="5000"
-                    disabled={true}
+                    disabled={!selectedSpl}
                   />
                 </InputWrapper>
               </div>
