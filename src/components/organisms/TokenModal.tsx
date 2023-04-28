@@ -9,8 +9,8 @@ interface Props {
   setShow: Dispatch<SetStateAction<boolean>>;
   isLoading: boolean;
   metadata: Metadata[] | undefined;
-  handleClick: (token?: Metadata<JsonMetadata<string>>) => void;
-  selected: Metadata | undefined;
+  handleClick: (token: Metadata<JsonMetadata<string>>) => void;
+  selected: Metadata[];
   handleConfirm: () => void;
 }
 const TokenModal: FC<Props> = (props: Props) => {
@@ -24,9 +24,21 @@ const TokenModal: FC<Props> = (props: Props) => {
     handleConfirm,
   } = props;
 
+  const isSelected = (token: Metadata): boolean => {
+    if (!selected) return false;
+
+    let _isSelected = false;
+    selected.find((o, i) => {
+      if (o?.mintAddress.toBase58() === token?.mintAddress.toBase58()) {
+        _isSelected = true;
+      }
+    });
+    return _isSelected;
+  };
+
   return (
     <Modal show={show} close={setShow}>
-      <div className="flex flex-col items-center justify-between w-screen lg:w-[100vh] h-screen lg:h-[70vh] xl:w-[120vh] xl:h-[80vh] bg-custom-dark-gray px-6 pt-12 lg:py-8 lg:rounded">
+      <div className="flex flex-col items-center justify-between w-screen lg:w-[100vh] h-screen lg:h-[70vh] xl:w-[120vh] xl:h-[80vh] bg-custom-dark-gray px-6 pt-12 lg:pt-8 lg:pb-3 lg:rounded">
         <AnimatePresence mode="wait">
           {isLoading && (
             <motion.div
@@ -41,28 +53,27 @@ const TokenModal: FC<Props> = (props: Props) => {
           {!isLoading && (
             <motion.div
               key="tokens"
-              className="h-full overflow-y-auto  flex flex-col items-center justify-between"
+              className="h-full overflow-y-auto flex flex-col items-center justify-between"
               {...midExitAnimation}
             >
               {metadata && metadata.length > 0 ? (
-                // <div className="flex flex-col items-center justify-between">
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-8 w-full gap-8 py-8 px-8 overflow-y-auto">
                   {metadata.map((item, index) => (
                     <motion.div
-                      className={`relative flex flex-col items-center justify-center rounded   cursor-pointer border-2 ${
-                        selected && selected.name === item.name
-                          ? "border-teal-500"
+                      className={`relative flex flex-col items-center justify-between rounded   cursor-pointer border-2 ${
+                        isSelected(item)
+                          ? "border-teal-500 shadow-lg shadow-teal-700"
                           : "border-gray-400"
                       }`}
                       key={index}
                       onClick={() => handleClick(item)}
                     >
-                      {selected && selected.name === item.name && (
+                      {isSelected(item) && (
                         <CheckIcon className="absolute top-1.5 right-1.5 bg-custom-mid-gray rounded-full z-20" />
                       )}
                       <div
-                        className={`border-b-2 border-gray-400 overflow-hidden ${
-                          selected && selected.name === item.name
+                        className={`overflow-hidden ${
+                          isSelected(item)
                             ? "border-teal-500"
                             : "border-gray-400"
                         }`}
@@ -75,30 +86,37 @@ const TokenModal: FC<Props> = (props: Props) => {
                             height={200}
                             width={200}
                             alt={item.name}
-                            className={`object-cover`}
+                            style={{ objectFit: "cover" }}
                           />
                         </div>
                       </div>
-                      <p className="text-xs py-3 w-full text-center text-ellipsis overflow-hidden">
+                      <p
+                        className={`text-xs py-3 w-full text-center text-ellipsis overflow-hidden border-t-2 ${
+                          isSelected(item)
+                            ? "border-teal-500"
+                            : "border-gray-400"
+                        }`}
+                      >
                         {item.name}
                       </p>
                     </motion.div>
                   ))}
                 </div>
               ) : (
-                // </div>
                 <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-3/4">
                   NO NFTS FOUND
                 </div>
               )}
 
-              <Button
-                className="mt-4 mb-2"
-                disabled={!selected}
-                onClick={handleConfirm}
-              >
-                Confirm
-              </Button>
+              {metadata && metadata.length > 0 && (
+                <Button
+                  className="mt-4 mb-2"
+                  disabled={selected.length === 0}
+                  onClick={handleConfirm}
+                >
+                  Confirm {selected.length > 0 ? `(${selected.length})` : ""}
+                </Button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

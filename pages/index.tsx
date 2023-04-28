@@ -6,8 +6,9 @@ import {
   Dropdown,
   TokenModal,
   SelectToken,
+  InputWrapper,
 } from "@components";
-import React, { useCallback, useState } from "react";
+import React, { FC, ReactNode, useCallback, useState } from "react";
 import { NextPage } from "next";
 import { AnimatePresence, motion } from "framer-motion";
 import { EXPO_PROGRAM_ID, midExitAnimation } from "@constants";
@@ -15,19 +16,16 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import DateTime from "react-datetime";
 import moment, { Moment } from "moment";
 import { toast } from "react-hot-toast";
-import { getTokensByOwner } from "@helpers";
+import { getTokensByOwner, getTokenAccounts } from "@helpers";
 import {
   FindNftsByOwnerOutput,
   JsonMetadata,
   Metadata,
-  Nft,
-  Sft,
 } from "@metaplex-foundation/js";
 import axios from "axios";
 import { useEffect } from "react";
-import { json } from "stream/consumers";
 import * as anchor from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { AccountInfo, ParsedAccountData, PublicKey } from "@solana/web3.js";
 import { executeTransaction } from "src/lib/transactions";
 import { tokenInfoMap } from "@constants";
 import { ExpoClient } from "src/lib/expo";
@@ -48,12 +46,15 @@ const Home: NextPage = () => {
   const [currency, setCurrency] = useState<any>(
     tokenInfoMap.get(tokensKeys[0])
   );
+  const [splDropdown, setSplDropdown] = useState<boolean>(false);
   //data
   const [date, setDate] = useState<string | Moment>();
   const [metadata, setMetadata] = useState<Metadata[] | undefined>();
-  const [selectedToken, setSelectedToken] = useState<Metadata | undefined>();
-  const [confirmedToken, setConfirmedToken] = useState<Metadata | undefined>();
-  const [tokens, setTokens] = useState<FindNftsByOwnerOutput | undefined>();
+  const [selectedToken, setSelectedToken] = useState<Metadata[]>([]);
+  const [confirmedToken, setConfirmedToken] = useState<Metadata[]>([]);
+  const [splMap, setSplMap] = useState<Map<string, any>>();
+  const [selectedSpl, setSelectedSpl] = useState<any>();
+  const [splAmount, setSplAmount] = useState<number>();
 
   const wallet = useWallet();
   const { publicKey, disconnect } = wallet;
@@ -71,6 +72,7 @@ const Home: NextPage = () => {
     className:
       "rounded border-2 border-gray-400 h-12 w-44 px-2 bg-custom-dark-gray focus:outline-teal-600",
   };
+  const noSplLabel = "none";
 
   //verify not past date
   const isValidDate = (current: any) => {
@@ -82,8 +84,8 @@ const Home: NextPage = () => {
   const handleDisconnect = (): void => {
     sessionStorage.clear();
     disconnect();
-    if (selectedToken) setSelectedToken(undefined);
-    if (confirmedToken) setConfirmedToken(undefined);
+    if (selectedToken) setSelectedToken([]);
+    if (confirmedToken) setConfirmedToken([]);
   };
 
   //set currency type
@@ -91,6 +93,25 @@ const Home: NextPage = () => {
     const tokensKeys = [...tokenInfoMap.keys()];
     setCurrency(tokenInfoMap.get(tokensKeys[id]));
     setCurrencyDropdown(false);
+  };
+
+  //set SPL type
+  const handleSplSelect = (id: number): void => {
+    if (!splMap) return;
+    const splKeys = [...splMap.keys()];
+    // if (id == 0) setSelectedSpl(noSplLabel);
+    console.log(
+      "splKeys ",
+      id - 1,
+      splKeys[id - 1],
+      splMap.get(splKeys[id - 1])
+    );
+    if (splMap.get(splKeys[id - 1])) {
+      setSelectedSpl(splMap.get(splKeys[id - 1]));
+      setSplDropdown(false);
+    }
+    // console.log("id ", splMap?.get());
+    // setSelectedSpl(splMap?.get());
   };
 
   //create the raffle
@@ -103,11 +124,11 @@ const Home: NextPage = () => {
       toast.error("Add Max Tickets");
       return;
     }
-    if (!price || price < 0.1) {
+    if (!price || price < 0.001) {
       toast.error("Add Ticket Price");
       return;
     }
-    if (!confirmedToken) {
+    if (!confirmedToken.length) {
       toast.error("Select NFT");
       return;
     }
@@ -117,7 +138,12 @@ const Home: NextPage = () => {
 
     const endTimestamp = new anchor.BN(moment(date).unix());
     const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
-    const nftMint = confirmedToken?.mintAddress;
+    //TODO: update for use with multiple tokens instead of first instance
+    // const nftMint = confirmedToken[0]?.mintAddress;
+    const nftMints = confirmedToken.map(token => token.mintAddress);
+    const splFinalAmount = splAmount
+      ? new anchor.BN(splAmount * Math.pow(10, selectedSpl.tokenAmount.decimals))
+      : new anchor.BN(0);
 
     try {
       const { signers, instructions } = await expo.createRaffle(
@@ -125,7 +151,9 @@ const Home: NextPage = () => {
         endTimestamp,
         ticketPrice,
         maxTickets,
-        nftMint
+        nftMints,
+        selectedSpl.mint,
+        splFinalAmount
       );
 
       const status = await executeTransaction(
@@ -162,11 +190,25 @@ const Home: NextPage = () => {
   };
 
   //handle nft selection
-  const handleTokenSelect = (
-    token: Metadata<JsonMetadata<string>> | undefined
-  ): void => {
-    console.log("handleTokenSelect ", token);
-    setSelectedToken(token === selectedToken ? undefined : token);
+  const handleTokenSelect = (token: Metadata<JsonMetadata<string>>): void => {
+    if (!token) return;
+    let isDuplicate = false;
+    //check for duplicates
+    selectedToken.find((item) => {
+      if (item?.mintAddress.toBase58() === token?.mintAddress.toBase58()) {
+        isDuplicate = true;
+      }
+    });
+    //add
+    if (!isDuplicate) setSelectedToken([...selectedToken, token]);
+    //remove
+    else
+      setSelectedToken((prevState) => {
+        return prevState.filter(
+          (item) =>
+            item?.mintAddress.toBase58() !== token?.mintAddress.toBase58()
+        );
+      });
   };
 
   //confirm nft selection
@@ -185,7 +227,7 @@ const Home: NextPage = () => {
       toast.error("Add Max Tickets");
       return;
     }
-    if (!price || price < 0.1) {
+    if (!price || price < 0.001) {
       toast.error("Add Ticket Price");
       return;
     }
@@ -198,6 +240,8 @@ const Home: NextPage = () => {
 
   //fetch users nfts
   const getTokens = useCallback(async () => {
+    if (!showTokenModal || !connection || !publicKey) return;
+
     try {
       setIsLoading(true);
       //fetch tokens
@@ -212,7 +256,6 @@ const Home: NextPage = () => {
         return;
       }
 
-      setTokens(tokens);
       // console.log("tokens ", tokens);
 
       //fetch metadata
@@ -220,22 +263,18 @@ const Home: NextPage = () => {
       await Promise.all(
         tokens.map(async (token, index) => {
           const uri = token.uri;
-          console.log(token.uri);
           try {
             await axios.get(uri).then((r) => {
-              // console.log("TOKEN ", uri, r.data);
-              // if (r.data.seller_fee_basis_points) {
               // @ts-ignore
               r.data.mintAddress = token.mintAddress;
               jsonArr.push(r.data);
-              // }
             });
           } catch (e: any) {
             console.error(e.message);
           }
         })
       );
-      // console.log("> metadata", jsonArr);
+      // console.log("metadata", jsonArr);
       jsonArr.sort((a, b) => a.name.localeCompare(b.name));
       setMetadata(jsonArr);
       setIsLoading(false);
@@ -245,7 +284,34 @@ const Home: NextPage = () => {
       toast.error(`Error ${e.message}`);
       setIsLoading(false);
     }
+  }, [connection, publicKey, showTokenModal]);
+
+  //fetch user spl tokens with balance > 1
+  const getSPLTokens = useCallback(async () => {
+    if (!publicKey) return;
+    const _tokens = await getTokenAccounts(connection, publicKey);
+
+    console.log('TOKENS: ', _tokens);
+
+    if (_tokens && typeof _tokens !== "string") {
+      //create new data map
+      const parsedInfo = new Map();
+      _tokens.forEach((_token) => {
+        parsedInfo.set(
+          //@ts-ignore
+          _token.account.data.parsed.info.mint,
+          //@ts-ignore
+          _token.account.data.parsed.info
+        );
+      });
+      // console.log("spl info ", parsedInfo);
+      setSplMap(parsedInfo);
+    }
   }, [connection, publicKey]);
+
+  useEffect(() => {
+    getSPLTokens();
+  }, [getSPLTokens]);
 
   useEffect(() => {
     getTokens();
@@ -278,56 +344,43 @@ const Home: NextPage = () => {
           sign out
         </div>
 
-        {/*  raffle form */}
+        {/* outter container */}
         <div className="relative flex flex-col gap-6 items-center justify-center pb-32 w-full">
           <h2 className="text-2xl pt-10 lg:pt-0">Enter Raffle Info</h2>
-          <div className="flex flex-col lg:flex-row justify-start items-center gap-10 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
-            {/* select nft */}
+          {/* layout container */}
+          <div className="flex flex-col lg:flex-row justify-start items-center gap-12 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
             <SelectToken
               handleClick={setShowTokenModal}
-              token={confirmedToken}
+              tokens={confirmedToken}
             />
-
-            {/* form */}
-            <div className="relative flex flex-col gap-3 lg:gap-4 items-center lg:items-start justify-center w-full pb-4">
-              {/* end date */}
-              <div className="flex flex-col gap-0.5 bg-custom-dark-gray">
-                <p className="text-xs">End Date & Time</p>
-                <DateTime
-                  inputProps={inputProps}
-                  isValidDate={isValidDate}
-                  onChange={(date) => setDate(date)}
-                />
-              </div>
-              {/* select currency */}
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xs">Select Currency</p>
-                <Dropdown
-                  handleSelect={handleCurrency}
-                  setShowDropdown={setCurrencyDropdown}
-                  showDropdown={currencyDropdown}
-                  label={currency.symbol}
-                  items={[...tokenInfoMap.keys()]}
-                />
-              </div>
-              {/* max tickets */}
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xs">Max Tickets</p>
-                <NumberInput
-                  max={5000}
-                  handleInput={setMaxTickets}
-                  placeholder="5000"
-                />
-              </div>
-              {/* ticket price */}
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xs">Ticket Price</p>
-                <NumberInput
-                  max={10000}
-                  handleInput={setPrice}
-                  placeholder="0.1"
-                  useDecimals={true}
-                />
+            <div className="flex flex-col sm:flex-row gap-10">
+              {/* fields 1 */}
+              <div className="relative flex flex-col gap-3 lg:gap-6 items-center lg:items-start justify-center w-full ">
+                <InputWrapper label="Select Currency">
+                  <Dropdown
+                    handleSelect={handleCurrency}
+                    setShowDropdown={setCurrencyDropdown}
+                    showDropdown={currencyDropdown}
+                    label={currency.symbol}
+                    items={[...tokenInfoMap.keys()]}
+                  />
+                </InputWrapper>
+                <InputWrapper label="Max Tickets">
+                  <NumberInput
+                    max={5000}
+                    handleInput={setMaxTickets}
+                    placeholder="5000"
+                  />
+                </InputWrapper>
+                <InputWrapper label="Ticket Price">
+                  <NumberInput
+                    max={10000}
+                    handleInput={setPrice}
+                    placeholder="0.1"
+                    useDecimals={true}
+                  />
+                </InputWrapper>
+                {/* Max Sales */}
                 <AnimatePresence mode="wait">
                   {maxTickets && maxTickets > 0 && price && price > 0 && (
                     <motion.div
@@ -343,6 +396,36 @@ const Home: NextPage = () => {
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+              {/* fields 2 */}
+              <div className="relative flex flex-col gap-3 lg:gap-6 items-center lg:items-start justify-center w-full">
+                <InputWrapper label="End Date & Time">
+                  <DateTime
+                    inputProps={inputProps}
+                    isValidDate={isValidDate}
+                    onChange={(date) => setDate(date)}
+                  />
+                </InputWrapper>
+                <InputWrapper label="Raffle SPL Token">
+                  <Dropdown
+                    handleSelect={handleSplSelect}
+                    setShowDropdown={setSplDropdown}
+                    showDropdown={splDropdown}
+                    //@ts-ignore
+                    label={selectedSpl?.mint ?? noSplLabel}
+                    items={
+                      splMap ? [noSplLabel, ...splMap.keys()] : [noSplLabel]
+                    }
+                  />
+                </InputWrapper>
+                <InputWrapper label="SPL Quantity">
+                  <NumberInput
+                    max={5000}
+                    handleInput={setSplAmount}
+                    placeholder="5000"
+                    disabled={!selectedSpl}
+                  />
+                </InputWrapper>
               </div>
             </div>
           </div>
@@ -374,7 +457,7 @@ const Home: NextPage = () => {
         setShow={setShowConfirmModal}
         isLoading={isCreating}
         handleClick={handleCreateRaffle}
-        token={confirmedToken}
+        tokens={confirmedToken}
         tickets={maxTickets}
         price={price}
         currency={currency.name}

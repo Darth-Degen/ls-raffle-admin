@@ -28,6 +28,7 @@ const NumberInput: FC<Props> = (props: Props) => {
 
   //add max length check
   const onInput = (event: React.FormEvent<HTMLInputElement>): void => {
+    //@ts-ignore
     if (Number((event.target as HTMLInputElement).value) > max) {
       (event.target as HTMLInputElement).value = max.toString();
       debouncer(max);
@@ -40,7 +41,7 @@ const NumberInput: FC<Props> = (props: Props) => {
     <div>
       <input
         className={`${className} rounded border-2 border-gray-400 h-12 w-44 px-2 bg-custom-dark-gray focus:outline-teal-600 ${
-          componentProps.disabled ? "cursor-not-allowed" : ""
+          componentProps.disabled ? "cursor-not-allowed opacity-20" : ""
         }`}
         onKeyPress={(e) => onKeyPress(e)}
         onInput={(e) => onInput(e)}

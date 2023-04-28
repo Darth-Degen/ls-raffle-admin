@@ -36,11 +36,11 @@ export const queryClient = new QueryClient({
 
 const App = ({ Component, pageProps }: AppProps) => {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-  const network = WalletAdapterNetwork.Devnet;
+  const network = WalletAdapterNetwork.Mainnet;
 
-  const endpoint = clusterApiUrl(network);
+  // const endpoint = clusterApiUrl(network);
 
-  // const endpoint = "https://rest-api.hellomoon.io/v0/rpc";
+  const endpoint = "https://rpc.hellomoon.io/3bd84347-2f2a-4be2-9653-bf99cce560c0";
   // const config = {
   //   commitment: "confirmed" as Commitment,
   //   httpHeaders: {

@@ -29,6 +29,8 @@ const Logo = dynamic(()=> import("./molecules/Logo"))
 const Dropdown = dynamic(()=> import("./molecules/Dropdown"))
 const Modal = dynamic(()=> import("./molecules/Modal"))
 const SelectToken = dynamic(()=> import("./molecules/SelectToken"))
+const ImagePicker = dynamic(()=> import("./molecules/ImagePicker"))
+const InputWrapper = dynamic(()=> import("./molecules/InputWrapper"))
 //organisms
 const Header = dynamic(()=> import("./organisms/Header"))
 const Footer = dynamic(()=> import("./organisms/Footer"))
@@ -68,5 +70,7 @@ export {
   TokenModal,
   SelectToken,
   CheckIcon,
-  ConfirmModal
+  ConfirmModal,
+  ImagePicker,
+  InputWrapper
 }

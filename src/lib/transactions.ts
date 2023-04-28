@@ -41,6 +41,9 @@ export async function executeTransaction(
 
   const signedTransactionv0 = await wallet.signTransaction(transactionv0);
 
+  const txSize = signedTransactionv0.serialize().length + (signedTransactionv0.signatures.length * 64);
+  console.log('txSize: ', txSize);
+
   const signature = await connection.sendRawTransaction(signedTransactionv0.serialize(), { maxRetries: 5 });
 
   console.log('signature:', signature);

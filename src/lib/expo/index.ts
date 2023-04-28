@@ -37,7 +37,9 @@ export class ExpoClient {
     endTimestamp: anchor.BN,
     ticketPrice: anchor.BN,
     maxEntrants: number = 500,
-    nftMint: PublicKey
+    nftMints: PublicKey[],
+    selectedSpl: PublicKey,
+    splAmount: anchor.BN
   ): Promise<{ signers: Keypair, instructions: TransactionInstruction[] }> {
     let entrantsKeypair = new Keypair();
 
@@ -72,34 +74,44 @@ export class ExpoClient {
       rent: SYSVAR_RENT_PUBKEY
     }).instruction();
 
-    const prizeIndex = 0;
-    const prizeAmount = new anchor.BN(1);
-    const prizeIndexArray = Buffer.from(new Uint32Array([0]).buffer);
+    const addPrizeIxs: TransactionInstruction[] = [];
 
-    const [prize, _prizeBump] = PublicKey.findProgramAddressSync(
-      [raffle.toBytes(), Buffer.from("prize"), prizeIndexArray],
-      this.expoProgram.programId
-    );
+    const allPrizes: any = [...nftMints, { selectedSpl, splAmount }];
 
-    const createPrizeTokenAccount = await getAssociatedTokenAddress(
-      nftMint,
-      new PublicKey(this.wallet.publicKey)
-    );
+    for await (let [index, nftMint] of allPrizes.entries()) {
+      const prizeAmount = nftMint.splAmount ? splAmount : new anchor.BN(1);
+      const prizeIndex = index;
+      const prizeIndexArray = Buffer.from(new Uint32Array([prizeIndex]).buffer);
 
-    const addPrizeIx = await this.expoProgram.methods.addPrize(prizeIndex, prizeAmount).accounts({
-      raffle,
-      creator: new PublicKey(this.wallet.publicKey),
-      systemProgram: SystemProgram.programId,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      rent: SYSVAR_RENT_PUBKEY,
-      from: createPrizeTokenAccount,
-      prize,
-      prizeMint: nftMint
-    }).instruction();
+      const [prize, _prizeBump] = PublicKey.findProgramAddressSync(
+        [raffle.toBytes(), Buffer.from("prize"), prizeIndexArray],
+        this.expoProgram.programId
+      );
+
+      const createPrizeTokenAccount = await getAssociatedTokenAddress(
+        nftMint.selectedSpl ? new PublicKey(nftMint.selectedSpl) : nftMint,
+        new PublicKey(this.wallet.publicKey)
+      );
+
+      const addPrizeIx = await this.expoProgram.methods.addPrize(prizeIndex, prizeAmount).accounts({
+        raffle,
+        creator: new PublicKey(this.wallet.publicKey),
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        rent: SYSVAR_RENT_PUBKEY,
+        from: createPrizeTokenAccount,
+        prize,
+        prizeMint: nftMint.selectedSpl ? new PublicKey(nftMint.selectedSpl) : nftMint,
+      }).instruction();
+
+      console.log('addPrizeIx: ', addPrizeIx);
+
+      addPrizeIxs.push(addPrizeIx);
+    }
 
     return {
       signers: entrantsKeypair,
-      instructions: [createEntrantsIx, createRaffleIx, addPrizeIx]
+      instructions: [createEntrantsIx, createRaffleIx, ...addPrizeIxs]
     };
   }
 
