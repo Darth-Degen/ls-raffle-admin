@@ -10,12 +10,12 @@ interface Props {
 
 const DropdownItem: FC<Props> = (props: Props) => {
   const { item, handleSelect, variants, index } = props;
-  const styles: string = "w-48 h-10 bg-custom-dark-gray  text-sm z-50";
+  const styles: string = " h-10 bg-custom-dark-gray  text-sm z-50";
 
   return (
     <li
       key={index}
-      className={`${styles} px-2 cursor-pointer flex items-center hover:bg-custom-black transition-colors duration-300 uppercase`}
+      className={`${styles} min-w-[200px] px-2 cursor-pointer flex items-center hover:bg-custom-black transition-colors duration-300 uppercase`}
       onClick={() => handleSelect(index)}
     >
       <motion.span variants={variants}>

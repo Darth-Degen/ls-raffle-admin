@@ -14,7 +14,7 @@ const ImagePicker: FC<PickerProps> = (props: PickerProps) => {
     <>
       {imageArr.length > 1 && (
         <div
-          className={`px-3 h-8 lg:h-6 flex items-center justify-center gap-3 absolute bottom-6 left-1/2 transform -translate-x-1/2 rounded-full bg-opacity-50 bg-gray-500 ${className}`}
+          className={`px-3 h-8 lg:h-6 flex items-center justify-center gap-3 absolute bottom-2 md:bottom-6 left-1/2 transform -translate-x-1/2 rounded-full bg-opacity-50 bg-gray-500 ${className}`}
           onClick={(e) => e.stopPropagation()}
         >
           {imageArr.map((item, index) => (

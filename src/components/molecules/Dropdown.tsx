@@ -29,7 +29,7 @@ const Dropdown: FC<Props> = (props: Props) => {
           <motion.div
             {...fastExitAnimation}
             key="dropdown-list"
-            className="absolute z-50 pt-2"
+            className="absolute -ml-3 z-50 pt-2"
           >
             <motion.div
               variants={dropdownAnimations}

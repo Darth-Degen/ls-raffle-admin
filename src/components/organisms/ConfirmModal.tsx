@@ -28,7 +28,7 @@ const ConfirmModal: FC<Props> = (props: Props) => {
     currency,
     date,
   } = props;
-  console.log("tokens ", tokens);
+
   return (
     <Modal show={show} close={setShow}>
       <div className="flex flex-col gap-8 items-center justify-between w-screen lg:w-auto h-screen lg:h-auto bg-custom-dark-gray px-20 py-14  lg:rounded">
