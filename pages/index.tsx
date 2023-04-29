@@ -152,7 +152,7 @@ const Home: NextPage = () => {
         ticketPrice,
         maxTickets,
         nftMints,
-        selectedSpl.mint,
+        selectedSpl ? selectedSpl.mint : undefined,
         splFinalAmount
       );
 
