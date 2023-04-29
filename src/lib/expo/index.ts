@@ -76,7 +76,10 @@ export class ExpoClient {
 
     const addPrizeIxs: TransactionInstruction[] = [];
 
-    const allPrizes: any = [...nftMints, { selectedSpl, splAmount }];
+    const allPrizes: any = [...nftMints];
+    if (selectedSpl && splAmount) {
+      allPrizes.push({ selectedSpl, splAmount });
+    }
 
     for await (let [index, nftMint] of allPrizes.entries()) {
       const prizeAmount = nftMint.splAmount ? splAmount : new anchor.BN(1);
@@ -103,8 +106,6 @@ export class ExpoClient {
         prize,
         prizeMint: nftMint.selectedSpl ? new PublicKey(nftMint.selectedSpl) : nftMint,
       }).instruction();
-
-      console.log('addPrizeIx: ', addPrizeIx);
 
       addPrizeIxs.push(addPrizeIx);
     }
