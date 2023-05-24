@@ -29,9 +29,9 @@ export const getTokenAccounts = async (connection: Connection, publicKey: Public
       TOKEN_PROGRAM_ID,
       { filters: filters }
     );
-    console.log(
-      `Found ${accounts.length} token account(s) for wallet ${wallet}.`
-    );
+    // console.log(
+    //   `Found ${accounts.length} token account(s) for wallet ${wallet}.`
+    // );
     accounts = accounts.filter((account, i) => {
       //Parse the account data
       const parsedAccountInfo: any = account.account.data;

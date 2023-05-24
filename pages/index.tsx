@@ -291,7 +291,7 @@ const Home: NextPage = () => {
     if (!publicKey) return;
     const _tokens = await getTokenAccounts(connection, publicKey);
 
-    console.log('TOKENS: ', _tokens);
+    // console.log('TOKENS: ', _tokens);
 
     if (_tokens && typeof _tokens !== "string") {
       //create new data map
