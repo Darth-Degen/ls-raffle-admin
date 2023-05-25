@@ -81,7 +81,7 @@ export async function executeTransaction(
 
   console.log('messageV0: ', messageV0);
 
-  if (messageV0.staticAccountKeys.length > 31) {
+  if (messageV0.staticAccountKeys.length > 26) {
     const newLookupTableAddress = await createLookupTable(
       connection,
       wallet
