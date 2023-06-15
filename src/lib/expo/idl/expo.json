@@ -117,6 +117,106 @@
       ]
     },
     {
+      "name": "addPrizeProgrammable",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "from",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rafflePrizeTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "prizeMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rafflePrizeTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creatorPrizeTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mintEdition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authorizationRules",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authorizationRulesProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sysvarInstructions",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "prizeIndex",
+          "type": "u32"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "buyTickets",
       "accounts": [
         {
@@ -198,6 +298,111 @@
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "prizeIndex",
+          "type": "u32"
+        },
+        {
+          "name": "ticketIndex",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "claimPrizeProgrammable",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "entrants",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rafflePrizeTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "winner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "winnerTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "prizeMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "winnerPrizeTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rafflePrizeTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mintEdition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authorizationRules",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authorizationRulesProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sysvarInstructions",
           "isMut": false,
           "isSigner": false
         }

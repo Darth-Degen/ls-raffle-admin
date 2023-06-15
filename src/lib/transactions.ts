@@ -1,4 +1,3 @@
-import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { WalletContextState } from "@solana/wallet-adapter-react";
 import {
   AddressLookupTableAccount,
@@ -9,8 +8,6 @@ import {
   PublicKey,
   RpcResponseAndContext,
   SignatureResult,
-  Signer,
-  Transaction,
   TransactionInstruction,
   TransactionMessage,
   VersionedTransaction

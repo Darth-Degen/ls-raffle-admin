@@ -1,9 +1,13 @@
-import { Connection, Keypair, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { AccountInfo, Commitment, ComputeBudgetProgram, Connection, GetMultipleAccountsConfig, Keypair, PublicKey, SystemProgram, SYSVAR_INSTRUCTIONS_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Expo } from "./idl/expo";
 import { getAssociatedTokenAddress, getMinimumBalanceForRentExemptAccount, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Program } from "@coral-xyz/anchor";
 import { EXPO_PROGRAM_ID } from "src/constants";
+import { Metadata, TokenStandard } from "@metaplex-foundation/mpl-token-metadata";
+
+const METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+const TOKEN_AUTH_RULES_ID = new PublicKey("auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg");
 
 export class ExpoClient {
   wallet: anchor.Wallet;
@@ -31,6 +35,100 @@ export class ExpoClient {
     );
     anchor.setProvider(this.provider);
   }
+
+  findMintMetadataId(mintId: PublicKey): PublicKey {
+    return PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode("metadata"),
+        METADATA_PROGRAM_ID.toBuffer(),
+        mintId.toBuffer(),
+      ],
+      METADATA_PROGRAM_ID
+    )[0];
+  };
+
+  findMintEditionId(mintId: PublicKey): PublicKey {
+    return PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode("metadata"),
+        METADATA_PROGRAM_ID.toBuffer(),
+        mintId.toBuffer(),
+        anchor.utils.bytes.utf8.encode("edition"),
+      ],
+      METADATA_PROGRAM_ID
+    )[0];
+  };
+
+  getBatchedMultipleAccounts = async (
+    connection: Connection,
+    ids: PublicKey[],
+    config?: GetMultipleAccountsConfig | Commitment,
+    batchSize = 100
+  ) => {
+    const batches: PublicKey[][] = [[]];
+    ids.forEach((id) => {
+      const batch = batches[batches.length - 1];
+      if (batch) {
+        if (batch.length >= batchSize) {
+          batches.push([id]);
+        } else {
+          batch.push(id);
+        }
+      }
+    });
+    const batchAccounts = await Promise.all(
+      batches.map((b) =>
+        b.length > 0 ? connection.getMultipleAccountsInfo(b, config) : []
+      )
+    );
+    return batchAccounts.flat();
+  };
+
+  fetchAccountDataById = async (
+    connection: Connection,
+    ids: (PublicKey | null)[]
+  ): Promise<{
+    [accountId: string]: AccountInfo<Buffer> & { pubkey: PublicKey };
+  }> => {
+    const filteredIds = ids.filter((id): id is PublicKey => id !== null);
+    const accountInfos = await this.getBatchedMultipleAccounts(
+      connection,
+      filteredIds
+    );
+    return accountInfos.reduce((acc, accountInfo, i) => {
+      if (!accountInfo?.data) return acc;
+      const pubkey = ids[i];
+      if (!pubkey) return acc;
+      acc[pubkey.toString()] = {
+        pubkey,
+        ...accountInfo,
+      };
+      return acc;
+    }, {} as { [accountId: string]: AccountInfo<Buffer> & { pubkey: PublicKey } });
+  };
+
+  findTokenRecordId(
+    mint: PublicKey,
+    token: PublicKey
+  ): PublicKey {
+    return PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("metadata"),
+        METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+        Buffer.from("token_record"),
+        token.toBuffer(),
+      ],
+      METADATA_PROGRAM_ID
+    )[0];
+  }
+
+  findRuleSetId(authority: PublicKey, name: string) {
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from("rule_set"), authority.toBuffer(), Buffer.from(name)],
+      TOKEN_AUTH_RULES_ID
+    )[0];
+  };
 
   async createRaffle(
     proceedsMint: PublicKey,
@@ -91,23 +189,66 @@ export class ExpoClient {
         this.expoProgram.programId
       );
 
+      let mintMetadataId = this.findMintMetadataId(nftMint);
+      let metdataInfo = await this.fetchAccountDataById(this.conn, [mintMetadataId])
+      const metadataAccountInfo = metdataInfo[mintMetadataId.toString()] ?? null;
+      const mintMetadata = metadataAccountInfo
+        ? Metadata.deserialize(metadataAccountInfo.data)[0]
+        : null;
+
       const createPrizeTokenAccount = await getAssociatedTokenAddress(
         nftMint.selectedSpl ? new PublicKey(nftMint.selectedSpl) : nftMint,
         new PublicKey(this.wallet.publicKey)
       );
 
-      const addPrizeIx = await this.expoProgram.methods.addPrize(prizeIndex, prizeAmount).accounts({
-        raffle,
-        creator: new PublicKey(this.wallet.publicKey),
-        systemProgram: SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        rent: SYSVAR_RENT_PUBKEY,
-        from: createPrizeTokenAccount,
-        prize,
-        prizeMint: nftMint.selectedSpl ? new PublicKey(nftMint.selectedSpl) : nftMint,
-      }).instruction();
+      if (
+        mintMetadata?.tokenStandard === TokenStandard.ProgrammableNonFungible &&
+        mintMetadata.programmableConfig
+      ) {
+        //// PROGRAMMABLE ////
+        addPrizeIxs.push(
+          ComputeBudgetProgram.setComputeUnitLimit({
+            units: 100000000,
+          })
+        );
 
-      addPrizeIxs.push(addPrizeIx);
+        const addPrizeIx = await this.expoProgram.methods.addPrizeProgrammable(prizeIndex, prizeAmount).accounts({
+          raffle,
+          creator: new PublicKey(this.wallet.publicKey),
+          from: createPrizeTokenAccount,
+          prizeMint: nftMint.selectedSpl ? new PublicKey(nftMint.selectedSpl) : nftMint,
+          mintMetadata: mintMetadataId,
+          mintEdition: this.findMintEditionId(nftMint),
+          rafflePrizeTokenAccount: prize,
+          rafflePrizeTokenRecord: this.findTokenRecordId(nftMint, prize),
+          creatorPrizeTokenRecord: this.findTokenRecordId(nftMint, createPrizeTokenAccount),
+          tokenMetadataProgram: METADATA_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          rent: SYSVAR_RENT_PUBKEY,
+          authorizationRules:
+            mintMetadata.programmableConfig?.ruleSet ?? METADATA_PROGRAM_ID,
+          authorizationRulesProgram: TOKEN_AUTH_RULES_ID,
+        }).instruction();
+
+        addPrizeIxs.push(addPrizeIx);
+
+      } else {
+        //// NON-PROGRAMMABLE ////
+        const addPrizeIx = await this.expoProgram.methods.addPrize(prizeIndex, prizeAmount).accounts({
+          raffle,
+          creator: new PublicKey(this.wallet.publicKey),
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          rent: SYSVAR_RENT_PUBKEY,
+          from: createPrizeTokenAccount,
+          prize,
+          prizeMint: nftMint.selectedSpl ? new PublicKey(nftMint.selectedSpl) : nftMint
+        }).instruction();
+
+        addPrizeIxs.push(addPrizeIx);
+      }
     }
 
     return {
