@@ -11,7 +11,7 @@ import {
 import React, { FC, ReactNode, useCallback, useState } from "react";
 import { NextPage } from "next";
 import { AnimatePresence, motion } from "framer-motion";
-import { EXPO_PROGRAM_ID, midExitAnimation } from "@constants";
+import { EXPO_PROGRAM_ID, RAFFLE_MODE_MULTI_WINNERS, RAFFLE_MODE_MULTI_WINNERS_LABEL, RAFFLE_MODE_SINGLE_WINNER, RAFFLE_MODE_SINGLE_WINNER_LABEL, midExitAnimation } from "@constants";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import DateTime from "react-datetime";
 import moment, { Moment } from "moment";
@@ -46,6 +46,9 @@ const Home: NextPage = () => {
   const [currency, setCurrency] = useState<any>(
     tokenInfoMap.get(tokensKeys[0])
   );
+  const [raffleMode, setRaffleMode] = useState<any>();
+  const [raffleModeLabel, setRaffleModeLabel] = useState<string>();
+  const [raffleModeDropdown, setRaffleModeDropdown] = useState<boolean>(false);
   const [splDropdown, setSplDropdown] = useState<boolean>(false);
   //data
   const [date, setDate] = useState<string | Moment>();
@@ -93,6 +96,19 @@ const Home: NextPage = () => {
     const tokensKeys = [...tokenInfoMap.keys()];
     setCurrency(tokenInfoMap.get(tokensKeys[id]));
     setCurrencyDropdown(false);
+  };
+
+  //set raffle mode
+  const handleRaffleMode = (id: any): void => {
+    if (id === RAFFLE_MODE_SINGLE_WINNER_LABEL) {
+      setRaffleMode(RAFFLE_MODE_SINGLE_WINNER);
+      setRaffleModeLabel(RAFFLE_MODE_SINGLE_WINNER_LABEL);
+      setRaffleModeDropdown(false);
+    } else {
+      setRaffleMode(RAFFLE_MODE_MULTI_WINNERS);
+      setRaffleModeLabel(RAFFLE_MODE_MULTI_WINNERS_LABEL);
+      setRaffleModeDropdown(false);
+    }
   };
 
   //set SPL type
@@ -153,7 +169,8 @@ const Home: NextPage = () => {
         maxTickets,
         nftMints,
         selectedSpl ? selectedSpl.mint : undefined,
-        splFinalAmount
+        splFinalAmount,
+        raffleMode
       );
 
       const status = await executeTransaction(
@@ -378,6 +395,15 @@ const Home: NextPage = () => {
                     handleInput={setPrice}
                     placeholder="0.1"
                     useDecimals={true}
+                  />
+                </InputWrapper>
+                <InputWrapper label="Ticket Price">
+                  <Dropdown
+                    handleSelect={handleRaffleMode}
+                    setShowDropdown={setRaffleModeDropdown}
+                    showDropdown={raffleModeDropdown}
+                    label={raffleModeLabel!}
+                    items={[RAFFLE_MODE_SINGLE_WINNER_LABEL, RAFFLE_MODE_MULTI_WINNERS_LABEL]}
                   />
                 </InputWrapper>
                 {/* Max Sales */}

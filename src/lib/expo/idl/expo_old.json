@@ -58,12 +58,6 @@
         {
           "name": "maxEntrants",
           "type": "u32"
-        },
-        {
-          "name": "raffleMode",
-          "type": {
-            "defined": "RaffleMode"
-          }
         }
       ]
     },
@@ -537,28 +531,6 @@
           {
             "name": "entrants",
             "type": "publicKey"
-          },
-          {
-            "name": "raffleMode",
-            "type": {
-              "defined": "RaffleMode"
-            }
-          }
-        ]
-      }
-    }
-  ],
-  "types": [
-    {
-      "name": "RaffleMode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "SingleWinner"
-          },
-          {
-            "name": "MultiWinners"
           }
         ]
       }
