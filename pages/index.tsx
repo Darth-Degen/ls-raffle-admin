@@ -33,6 +33,7 @@ import expoIdlJSON from "src/lib/expo/idl/expo.json";
 
 const Home: NextPage = () => {
   const tokensKeys = [...tokenInfoMap.keys()];
+  const raffleModes = [RAFFLE_MODE_SINGLE_WINNER_LABEL, RAFFLE_MODE_MULTI_WINNERS_LABEL];
 
   //load & display modal
   const [isCreating, setIsCreating] = useState<boolean>(false);
@@ -99,8 +100,8 @@ const Home: NextPage = () => {
   };
 
   //set raffle mode
-  const handleRaffleMode = (id: any): void => {
-    if (id === RAFFLE_MODE_SINGLE_WINNER_LABEL) {
+  const handleRaffleMode = (id: number): void => {
+    if (raffleModes[id] === RAFFLE_MODE_SINGLE_WINNER_LABEL) {
       setRaffleMode(RAFFLE_MODE_SINGLE_WINNER);
       setRaffleModeLabel(RAFFLE_MODE_SINGLE_WINNER_LABEL);
       setRaffleModeDropdown(false);
@@ -154,7 +155,7 @@ const Home: NextPage = () => {
 
     const endTimestamp = new anchor.BN(moment(date).unix());
     const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
-    //TODO: update for use with multiple tokens instead of first instance
+    // TODO: update for use with multiple tokens instead of first instance
     // const nftMint = confirmedToken[0]?.mintAddress;
     const nftMints = confirmedToken.map(token => token.mintAddress);
     const splFinalAmount = splAmount
@@ -397,13 +398,13 @@ const Home: NextPage = () => {
                     useDecimals={true}
                   />
                 </InputWrapper>
-                <InputWrapper label="Ticket Price">
+                <InputWrapper label="Raffle mode">
                   <Dropdown
                     handleSelect={handleRaffleMode}
                     setShowDropdown={setRaffleModeDropdown}
                     showDropdown={raffleModeDropdown}
                     label={raffleModeLabel!}
-                    items={[RAFFLE_MODE_SINGLE_WINNER_LABEL, RAFFLE_MODE_MULTI_WINNERS_LABEL]}
+                    items={raffleModes}
                   />
                 </InputWrapper>
                 {/* Max Sales */}
