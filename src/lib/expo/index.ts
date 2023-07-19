@@ -136,7 +136,7 @@ export class ExpoClient {
     ticketPrice: anchor.BN,
     maxEntrants: number = 500,
     nftMints: PublicKey[],
-    selectedSpl: PublicKey,
+    selectedSpl: PublicKey | undefined,
     splAmount: anchor.BN,
     raffleMode: any
   ): Promise<{ signers: Keypair, instructions: TransactionInstruction[] }> {
@@ -256,6 +256,44 @@ export class ExpoClient {
       signers: entrantsKeypair,
       instructions: [createEntrantsIx, createRaffleIx, ...addPrizeIxs]
     };
+  }
+
+  async addSplPrize(
+    entrantsKeypair: PublicKey,
+    prizeMint: PublicKey,
+    splAmount: anchor.BN,
+    prizeIndex: number
+  ) {
+    let [raffle, _raffleBump] = PublicKey.findProgramAddressSync(
+      [Buffer.from("raffle"), entrantsKeypair.toBytes()],
+      this.expoProgram.programId
+    );
+
+    const prizeAmount = splAmount ?? new anchor.BN(1);
+    const prizeIndexArray = Buffer.from(new Uint32Array([prizeIndex]).buffer);
+
+    const [prize, _prizeBump] = PublicKey.findProgramAddressSync(
+      [raffle.toBytes(), Buffer.from("prize"), prizeIndexArray],
+      this.expoProgram.programId
+    );
+
+    const createPrizeTokenAccount = await getAssociatedTokenAddress(
+      prizeMint,
+      new PublicKey(this.wallet.publicKey)
+    );
+
+    const addPrizeIx = await this.expoProgram.methods.addPrize(prizeIndex, prizeAmount).accounts({
+      raffle,
+      creator: new PublicKey(this.wallet.publicKey),
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+      from: createPrizeTokenAccount,
+      prize,
+      prizeMint
+    }).instruction();
+
+    return addPrizeIx;
   }
 
   setExpoProgram(idl?: anchor.Idl, programId?: PublicKey) {

@@ -25,7 +25,7 @@ import {
 import axios from "axios";
 import { useEffect } from "react";
 import * as anchor from "@coral-xyz/anchor";
-import { AccountInfo, ParsedAccountData, PublicKey } from "@solana/web3.js";
+import { AccountInfo, ParsedAccountData, PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { executeTransaction } from "src/lib/transactions";
 import { tokenInfoMap } from "@constants";
 import { ExpoClient } from "src/lib/expo";
@@ -37,6 +37,7 @@ const Home: NextPage = () => {
 
   //load & display modal
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [isAdingPrizes, setIsAddingPrizes] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showTokenModal, setShowTokenModal] = useState<boolean>(false);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
@@ -59,6 +60,7 @@ const Home: NextPage = () => {
   const [splMap, setSplMap] = useState<Map<string, any>>();
   const [selectedSpl, setSelectedSpl] = useState<any>();
   const [splAmount, setSplAmount] = useState<number>();
+  const [splPrizesCount, setSplPrizesCount] = useState<number>();
 
   const wallet = useWallet();
   const { publicKey, disconnect } = wallet;
@@ -169,7 +171,8 @@ const Home: NextPage = () => {
         ticketPrice,
         maxTickets,
         nftMints,
-        selectedSpl ? selectedSpl.mint : undefined,
+        // We don't create SPL prizes during raffle creation now
+        undefined, // selectedSpl ? selectedSpl.mint : undefined,
         splFinalAmount,
         raffleMode
       );
@@ -192,8 +195,34 @@ const Home: NextPage = () => {
           id: toastId,
         });
       }
+
       setShowConfirmModal(false);
       setIsCreating(false);
+
+      setIsAddingPrizes(true);
+
+      // Add additional prizes for many SPL prizes
+      const additionalPrizes = Array(splPrizesCount).fill({ amount: splAmount });
+      const additionalIxs: TransactionInstruction[] = [];
+
+      for await (let [index, splPrize] of additionalPrizes.entries()) {
+        const splPrizeMint = selectedSpl.mint;
+
+        const ix = await expo.addSplPrize(
+          signers.publicKey,
+          splPrizeMint,
+          splPrize.amount,
+          index
+        );
+
+        additionalIxs.push(ix);
+      }
+
+      for await (let ix of additionalIxs) {
+
+      }
+
+      setIsAddingPrizes(false);
     } catch (e: unknown) {
       toast.error(
         e instanceof Error ? e.message : "An error occured. Please try again.",
@@ -450,6 +479,14 @@ const Home: NextPage = () => {
                     max={5000}
                     handleInput={setSplAmount}
                     placeholder="5000"
+                    disabled={!selectedSpl}
+                  />
+                </InputWrapper>
+                <InputWrapper label="SPL Prizes Count">
+                  <NumberInput
+                    max={5000}
+                    handleInput={setSplPrizesCount}
+                    placeholder="1"
                     disabled={!selectedSpl}
                   />
                 </InputWrapper>
