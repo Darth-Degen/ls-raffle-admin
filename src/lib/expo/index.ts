@@ -139,7 +139,7 @@ export class ExpoClient {
     selectedSpl: PublicKey | undefined,
     splAmount: anchor.BN,
     raffleMode: any
-  ): Promise<{ signers: Keypair, instructions: TransactionInstruction[] }> {
+  ): Promise<{ signers: Keypair, instructions: TransactionInstruction[], raffle: any }> {
     let entrantsKeypair = new Keypair();
 
     let [raffle, _raffleBump] = PublicKey.findProgramAddressSync(
@@ -254,7 +254,8 @@ export class ExpoClient {
 
     return {
       signers: entrantsKeypair,
-      instructions: [createEntrantsIx, createRaffleIx, ...addPrizeIxs]
+      instructions: [createEntrantsIx, createRaffleIx], //, ...addPrizeIxs]
+      raffle
     };
   }
 

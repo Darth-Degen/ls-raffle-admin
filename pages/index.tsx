@@ -25,11 +25,15 @@ import {
 import axios from "axios";
 import { useEffect } from "react";
 import * as anchor from "@coral-xyz/anchor";
-import { AccountInfo, ParsedAccountData, PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { executeTransaction } from "src/lib/transactions";
+import { AccountInfo, ParsedAccountData, PublicKey, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { executeTransaction, sendAndValidateTransaction } from "src/lib/transactions";
 import { tokenInfoMap } from "@constants";
 import { ExpoClient } from "src/lib/expo";
 import expoIdlJSON from "src/lib/expo/idl/expo.json";
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 const Home: NextPage = () => {
   const tokensKeys = [...tokenInfoMap.keys()];
@@ -59,8 +63,15 @@ const Home: NextPage = () => {
   const [confirmedToken, setConfirmedToken] = useState<Metadata[]>([]);
   const [splMap, setSplMap] = useState<Map<string, any>>();
   const [selectedSpl, setSelectedSpl] = useState<any>();
-  const [splAmount, setSplAmount] = useState<number>();
-  const [splPrizesCount, setSplPrizesCount] = useState<number>();
+
+  const [splAmountBatchOne, setSplAmountBatchOne] = useState<number>();
+  const [splPrizesCountBatchOne, setSplPrizesCountBatchOne] = useState<number>();
+
+  const [splAmountBatchTwo, setSplAmountBatchTwo] = useState<number>();
+  const [splPrizesCountBatchTwo, setSplPrizesCountBatchTwo] = useState<number>();
+
+  const [splAmountBatchThree, setSplAmountBatchThree] = useState<number>();
+  const [splPrizesCountBatchThree, setSplPrizesCountBatchThree] = useState<number>();
 
   const wallet = useWallet();
   const { publicKey, disconnect } = wallet;
@@ -147,10 +158,10 @@ const Home: NextPage = () => {
       toast.error("Add Ticket Price");
       return;
     }
-    if (!confirmedToken.length) {
-      toast.error("Select NFT");
-      return;
-    }
+    // if (!confirmedToken.length) {
+    //   toast.error("Select NFT");
+    //   return;
+    // }
 
     const toastId = toast.loading("Creating raffle...");
     setIsCreating(true);
@@ -160,12 +171,12 @@ const Home: NextPage = () => {
     // TODO: update for use with multiple tokens instead of first instance
     // const nftMint = confirmedToken[0]?.mintAddress;
     const nftMints = confirmedToken.map(token => token.mintAddress);
-    const splFinalAmount = splAmount
-      ? new anchor.BN(splAmount * Math.pow(10, selectedSpl.tokenAmount.decimals))
+    const splFinalAmount = splAmountBatchOne
+      ? new anchor.BN(splAmountBatchOne * Math.pow(10, selectedSpl.tokenAmount.decimals))
       : new anchor.BN(0);
 
     try {
-      const { signers, instructions } = await expo.createRaffle(
+      const { signers, instructions, raffle } = await expo.createRaffle(
         new PublicKey(currency.address),
         endTimestamp,
         ticketPrice,
@@ -202,24 +213,100 @@ const Home: NextPage = () => {
       setIsAddingPrizes(true);
 
       // Add additional prizes for many SPL prizes
-      const additionalPrizes = Array(splPrizesCount).fill({ amount: splAmount });
+      const additionalPrizesBatchOne = Array(splPrizesCountBatchOne).fill({ amount: splAmountBatchOne });
+      const additionalPrizesBatchTwo = Array(splPrizesCountBatchTwo).fill({ amount: splAmountBatchTwo });
+      const additionalPrizesBatchThree = Array(splPrizesCountBatchThree).fill({ amount: splAmountBatchThree });
+
+      const additionalPrizes = [
+        ...additionalPrizesBatchOne,
+        ...additionalPrizesBatchTwo,
+        ...additionalPrizesBatchThree
+      ];
+
+      console.log('additionalPrizes: ', additionalPrizes);
+
       const additionalIxs: TransactionInstruction[] = [];
+
+      // const raffledata = await expo.expoProgram.account.raffle.fetch(raffle.toBase58());
+      // console.log('RTaffle: ', raffledata);
 
       for await (let [index, splPrize] of additionalPrizes.entries()) {
         const splPrizeMint = selectedSpl.mint;
+        console.log('prize index: ', index);
+        const finalAmount = splPrize.amount * Math.pow(10, selectedSpl.tokenAmount.decimals);
+        console.log('finalAmount: ', finalAmount);
 
         const ix = await expo.addSplPrize(
           signers.publicKey,
-          splPrizeMint,
-          splPrize.amount,
+          new PublicKey(splPrizeMint),
+          new anchor.BN(finalAmount),
           index
         );
 
         additionalIxs.push(ix);
       }
 
-      for await (let ix of additionalIxs) {
+      function* chunks<T>(arr: T[], n: number): Generator<T[], void> {
+        for (let i = 0; i < arr.length; i += n) {
+          yield arr.slice(i, i + n);
+        }
+      }
 
+      const ixsBatchLength = 12;
+      const batchedIxs = [...chunks(additionalIxs, ixsBatchLength)];
+
+      const batchTransactions: VersionedTransaction[] = [];
+
+      let lastScanIndex = 0;
+
+      for await (let [index, instructions] of batchedIxs.entries()) {
+        const latestBlockhash = await connection.getLatestBlockhash("finalized");
+        console.log('got blackhash: ', latestBlockhash);
+
+        let messageV0 = new TransactionMessage({
+          payerKey: wallet.publicKey!,
+          recentBlockhash: latestBlockhash.blockhash,
+          instructions
+        }).compileToV0Message();
+        const transactionv0 = new VersionedTransaction(messageV0);
+        // transactionv0.sign([signers]);
+        batchTransactions.push(transactionv0);
+
+        const txBatchSize = 3;
+
+        const isLastBatch = (
+          batchedIxs.length - lastScanIndex < txBatchSize
+        ) && (
+            batchTransactions.length === batchedIxs.length
+          );
+
+        if (
+          batchTransactions.length % txBatchSize === 0 || isLastBatch
+        ) {
+          console.log('Is divisible ? ', batchTransactions.length % txBatchSize === 0);
+          console.log('-- Start index: ', batchTransactions.length - txBatchSize);
+          console.log('-- End index: ', batchTransactions.length);
+
+          console.log('Is last batch ? ', isLastBatch);
+
+          const transactions = isLastBatch
+            ? batchTransactions.slice(lastScanIndex)
+            : batchTransactions.slice(batchTransactions.length - txBatchSize);
+
+          lastScanIndex = batchTransactions.length;
+
+          const signedTransactions = await wallet.signAllTransactions!(transactions);
+
+          const prizesResults = await signedTransactions.reduce(async (prev, transaction): Promise<any> => {
+            await prev;
+            console.log('Sending tx');
+            await sendAndValidateTransaction(connection, transaction, latestBlockhash);
+            console.log('Tx sent');
+            return await sleep(400);
+          }, Promise.resolve());
+
+          console.log("prizesResults: ", prizesResults);
+        }
       }
 
       setIsAddingPrizes(false);
@@ -400,7 +487,7 @@ const Home: NextPage = () => {
               handleClick={setShowTokenModal}
               tokens={confirmedToken}
             />
-            <div className="flex flex-col sm:flex-row gap-10">
+            <div className="flex flex-col sm:flex-row items-start gap-10">
               {/* fields 1 */}
               <div className="relative flex flex-col gap-3 lg:gap-6 items-center lg:items-start justify-center w-full ">
                 <InputWrapper label="Select Currency">
@@ -425,15 +512,6 @@ const Home: NextPage = () => {
                     handleInput={setPrice}
                     placeholder="0.1"
                     useDecimals={true}
-                  />
-                </InputWrapper>
-                <InputWrapper label="Raffle mode">
-                  <Dropdown
-                    handleSelect={handleRaffleMode}
-                    setShowDropdown={setRaffleModeDropdown}
-                    showDropdown={raffleModeDropdown}
-                    label={raffleModeLabel!}
-                    items={raffleModes}
                   />
                 </InputWrapper>
                 {/* Max Sales */}
@@ -462,35 +540,92 @@ const Home: NextPage = () => {
                     onChange={(date) => setDate(date)}
                   />
                 </InputWrapper>
-                <InputWrapper label="Raffle SPL Token">
+                <InputWrapper label="Raffle mode">
                   <Dropdown
-                    handleSelect={handleSplSelect}
-                    setShowDropdown={setSplDropdown}
-                    showDropdown={splDropdown}
-                    //@ts-ignore
-                    label={selectedSpl?.mint ?? noSplLabel}
-                    items={
-                      splMap ? [noSplLabel, ...splMap.keys()] : [noSplLabel]
-                    }
-                  />
-                </InputWrapper>
-                <InputWrapper label="SPL Quantity">
-                  <NumberInput
-                    max={5000}
-                    handleInput={setSplAmount}
-                    placeholder="5000"
-                    disabled={!selectedSpl}
-                  />
-                </InputWrapper>
-                <InputWrapper label="SPL Prizes Count">
-                  <NumberInput
-                    max={5000}
-                    handleInput={setSplPrizesCount}
-                    placeholder="1"
-                    disabled={!selectedSpl}
+                    handleSelect={handleRaffleMode}
+                    setShowDropdown={setRaffleModeDropdown}
+                    showDropdown={raffleModeDropdown}
+                    label={raffleModeLabel!}
+                    items={raffleModes}
                   />
                 </InputWrapper>
               </div>
+            </div>
+          </div>
+          <div className="flex-row sm:flex-row gap-12 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
+            <div className="relative flex flex-row gap-3 lg:gap-6 items-center lg:items-start justify-center w-full ">
+              <InputWrapper label="Raffle SPL Token">
+                <Dropdown
+                  handleSelect={handleSplSelect}
+                  setShowDropdown={setSplDropdown}
+                  showDropdown={splDropdown}
+                  //@ts-ignore
+                  label={selectedSpl?.mint ?? noSplLabel}
+                  items={
+                    splMap ? [noSplLabel, ...splMap.keys()] : [noSplLabel]
+                  }
+                />
+              </InputWrapper>
+            </div>
+
+            <h2 className="mt-6">Batch 1</h2>
+            <div className="flex flex-row gap-12">
+              <InputWrapper label="SPL Quantity per prize">
+                <NumberInput
+                  max={5000}
+                  handleInput={setSplAmountBatchOne}
+                  placeholder="5000"
+                  disabled={!selectedSpl}
+                />
+              </InputWrapper>
+              <InputWrapper label="Prizes Count for this batch">
+                <NumberInput
+                  max={5000}
+                  handleInput={setSplPrizesCountBatchOne}
+                  placeholder="1"
+                  disabled={!selectedSpl}
+                />
+              </InputWrapper>
+            </div>
+
+            <h2 className="mt-6">Batch 2</h2>
+            <div className="flex flex-row gap-12">
+              <InputWrapper label="SPL Quantity per prize">
+                <NumberInput
+                  max={5000}
+                  handleInput={setSplAmountBatchTwo}
+                  placeholder="5000"
+                  disabled={!selectedSpl}
+                />
+              </InputWrapper>
+              <InputWrapper label="Prizes Count for this batch">
+                <NumberInput
+                  max={5000}
+                  handleInput={setSplPrizesCountBatchTwo}
+                  placeholder="1"
+                  disabled={!selectedSpl}
+                />
+              </InputWrapper>
+            </div>
+
+            <h2 className="mt-6">Batch 3</h2>
+            <div className="flex flex-row gap-12">
+              <InputWrapper label="SPL Quantity per prize">
+                <NumberInput
+                  max={5000}
+                  handleInput={setSplAmountBatchThree}
+                  placeholder="5000"
+                  disabled={!selectedSpl}
+                />
+              </InputWrapper>
+              <InputWrapper label="Prizes Count for this batch">
+                <NumberInput
+                  max={5000}
+                  handleInput={setSplPrizesCountBatchThree}
+                  placeholder="1"
+                  disabled={!selectedSpl}
+                />
+              </InputWrapper>
             </div>
           </div>
           <Button

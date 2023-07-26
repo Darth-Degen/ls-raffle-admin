@@ -2,6 +2,8 @@ import { WalletContextState } from "@solana/wallet-adapter-react";
 import {
   AddressLookupTableAccount,
   AddressLookupTableProgram,
+  Blockhash,
+  BlockhashWithExpiryBlockHeight,
   BlockheightBasedTransactionConfirmationStrategy,
   Connection,
   Keypair,
@@ -125,6 +127,22 @@ export async function executeTransaction(
   const signature = await connection.sendRawTransaction(signedTransactionv0.serialize(), { maxRetries: 5 });
 
   console.log('signature:', signature);
+
+  const confirmStrategy: BlockheightBasedTransactionConfirmationStrategy = {
+    blockhash: latestBlockhash.blockhash,
+    lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+    signature
+  };
+
+  return await connection.confirmTransaction(confirmStrategy);
+}
+
+export async function sendAndValidateTransaction(
+  connection: Connection,
+  transaction: VersionedTransaction,
+  latestBlockhash: BlockhashWithExpiryBlockHeight
+) {
+  const signature = await connection.sendRawTransaction(transaction.serialize(), { maxRetries: 5, skipPreflight: true });
 
   const confirmStrategy: BlockheightBasedTransactionConfirmationStrategy = {
     blockhash: latestBlockhash.blockhash,
