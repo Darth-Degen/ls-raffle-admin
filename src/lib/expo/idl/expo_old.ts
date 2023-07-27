@@ -58,12 +58,6 @@ export type Expo = {
         {
           "name": "maxEntrants",
           "type": "u32"
-        },
-        {
-          "name": "raffleMode",
-          "type": {
-            "defined": "RaffleMode"
-          }
         }
       ]
     },
@@ -537,28 +531,6 @@ export type Expo = {
           {
             "name": "entrants",
             "type": "publicKey"
-          },
-          {
-            "name": "raffleMode",
-            "type": {
-              "defined": "RaffleMode"
-            }
-          }
-        ]
-      }
-    }
-  ],
-  "types": [
-    {
-      "name": "RaffleMode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "SingleWinner"
-          },
-          {
-            "name": "MultiWinners"
           }
         ]
       }
@@ -713,12 +685,6 @@ export const IDL: Expo = {
         {
           "name": "maxEntrants",
           "type": "u32"
-        },
-        {
-          "name": "raffleMode",
-          "type": {
-            "defined": "RaffleMode"
-          }
         }
       ]
     },
@@ -1192,28 +1158,6 @@ export const IDL: Expo = {
           {
             "name": "entrants",
             "type": "publicKey"
-          },
-          {
-            "name": "raffleMode",
-            "type": {
-              "defined": "RaffleMode"
-            }
-          }
-        ]
-      }
-    }
-  ],
-  "types": [
-    {
-      "name": "RaffleMode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "SingleWinner"
-          },
-          {
-            "name": "MultiWinners"
           }
         ]
       }

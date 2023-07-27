@@ -137,7 +137,8 @@ export class ExpoClient {
     maxEntrants: number = 500,
     nftMints: PublicKey[],
     selectedSpl: PublicKey,
-    splAmount: anchor.BN
+    splAmount: anchor.BN,
+    raffleMode: any
   ): Promise<{ signers: Keypair, instructions: TransactionInstruction[] }> {
     let entrantsKeypair = new Keypair();
 
@@ -161,7 +162,7 @@ export class ExpoClient {
       space: entrantsAccountSize
     });
 
-    const createRaffleIx = await this.expoProgram.methods.createRaffle(endTimestamp, ticketPrice, maxEntrants).accounts({
+    const createRaffleIx = await this.expoProgram.methods.createRaffle(endTimestamp, ticketPrice, maxEntrants, raffleMode).accounts({
       raffle,
       entrants: entrantsKeypair.publicKey,
       creator: new PublicKey(this.wallet.publicKey),
