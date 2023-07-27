@@ -139,7 +139,7 @@ export class ExpoClient {
     selectedSpl: PublicKey | undefined,
     splAmount: anchor.BN,
     raffleMode: any
-  ): Promise<{ signers: Keypair, instructions: TransactionInstruction[], raffle: any }> {
+  ): Promise<{ signers: Keypair, instructions: TransactionInstruction[], raffle: PublicKey }> {
     let entrantsKeypair = new Keypair();
 
     let [raffle, _raffleBump] = PublicKey.findProgramAddressSync(
@@ -263,12 +263,15 @@ export class ExpoClient {
     entrantsKeypair: PublicKey,
     prizeMint: PublicKey,
     splAmount: anchor.BN,
-    prizeIndex: number
+    prizeIndex: number,
+    raffleId?: PublicKey
   ) {
-    let [raffle, _raffleBump] = PublicKey.findProgramAddressSync(
-      [Buffer.from("raffle"), entrantsKeypair.toBytes()],
-      this.expoProgram.programId
-    );
+    let [raffle] = raffleId
+      ? [raffleId]
+      : PublicKey.findProgramAddressSync(
+        [Buffer.from("raffle"), entrantsKeypair.toBytes()],
+        this.expoProgram.programId
+      );
 
     const prizeAmount = splAmount ?? new anchor.BN(1);
     const prizeIndexArray = Buffer.from(new Uint32Array([prizeIndex]).buffer);
@@ -295,6 +298,13 @@ export class ExpoClient {
     }).instruction();
 
     return addPrizeIx;
+  }
+
+  async updateEndDate(raffle: PublicKey, endDate: anchor.BN) {
+    return await this.expoProgram.methods.updateEndDate(endDate).accounts({
+      raffle: raffle,
+      creator: this.wallet.publicKey
+    }).instruction();
   }
 
   setExpoProgram(idl?: anchor.Idl, programId?: PublicKey) {

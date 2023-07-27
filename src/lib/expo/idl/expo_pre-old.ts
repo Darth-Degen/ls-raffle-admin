@@ -1,4 +1,4 @@
-{
+export type Expo = {
   "version": "0.1.0",
   "name": "expo",
   "instructions": [
@@ -64,27 +64,6 @@
           "type": {
             "defined": "RaffleMode"
           }
-        }
-      ]
-    },
-    {
-      "name": "updateEndDate",
-      "accounts": [
-        {
-          "name": "raffle",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "creator",
-          "isMut": false,
-          "isSigner": true
-        }
-      ],
-      "args": [
-        {
-          "name": "endTimestamp",
-          "type": "i64"
         }
       ]
     },
@@ -500,7 +479,7 @@
   ],
   "accounts": [
     {
-      "name": "Entrants",
+      "name": "entrants",
       "type": {
         "kind": "struct",
         "fields": [
@@ -516,7 +495,7 @@
       }
     },
     {
-      "name": "Raffle",
+      "name": "raffle",
       "type": {
         "kind": "struct",
         "fields": [
@@ -671,8 +650,660 @@
       "name": "InvalidEntrantPubkey",
       "msg": "Error parsing entrant pubkey"
     }
+  ]
+};
+
+export const IDL: Expo = {
+  "version": "0.1.0",
+  "name": "expo",
+  "instructions": [
+    {
+      "name": "createRaffle",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "entrants",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "proceeds",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "proceedsMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "endTimestamp",
+          "type": "i64"
+        },
+        {
+          "name": "ticketPrice",
+          "type": "u64"
+        },
+        {
+          "name": "maxEntrants",
+          "type": "u32"
+        },
+        {
+          "name": "raffleMode",
+          "type": {
+            "defined": "RaffleMode"
+          }
+        }
+      ]
+    },
+    {
+      "name": "addPrize",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "from",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "prize",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "prizeMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "prizeIndex",
+          "type": "u32"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "addPrizeProgrammable",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "from",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rafflePrizeTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "prizeMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rafflePrizeTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creatorPrizeTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mintEdition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authorizationRules",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authorizationRulesProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sysvarInstructions",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "prizeIndex",
+          "type": "u32"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "buyTickets",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "entrants",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "proceeds",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyerTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyerTransferAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "revealWinners",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "recentBlockhashes",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimPrize",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "entrants",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "prize",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "winnerTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "prizeIndex",
+          "type": "u32"
+        },
+        {
+          "name": "ticketIndex",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "claimPrizeProgrammable",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "entrants",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rafflePrizeTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "winner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "winnerTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "prizeMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "winnerPrizeTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rafflePrizeTokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mintEdition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authorizationRules",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authorizationRulesProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sysvarInstructions",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "prizeIndex",
+          "type": "u32"
+        },
+        {
+          "name": "ticketIndex",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "collectProceeds",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "proceeds",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "creatorProceeds",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeEntrants",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "entrants",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    }
   ],
-  "metadata": {
-    "address": "5q3XmcuGp3upn9ASY6GLtPyKXEMWWaast2QyDFcaXvXS"
-  }
-}
+  "accounts": [
+    {
+      "name": "entrants",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total",
+            "type": "u32"
+          },
+          {
+            "name": "max",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "raffle",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "totalPrizes",
+            "type": "u32"
+          },
+          {
+            "name": "claimedPrizes",
+            "type": "u32"
+          },
+          {
+            "name": "randomness",
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          },
+          {
+            "name": "endTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "ticketPrice",
+            "type": "u64"
+          },
+          {
+            "name": "entrants",
+            "type": "publicKey"
+          },
+          {
+            "name": "raffleMode",
+            "type": {
+              "defined": "RaffleMode"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "RaffleMode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "SingleWinner"
+          },
+          {
+            "name": "MultiWinners"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "EntrantsAccountTooSmallForMaxEntrants",
+      "msg": "Entrants account too small for max entrants"
+    },
+    {
+      "code": 6001,
+      "name": "RaffleEnded",
+      "msg": "Raffle has ended"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidPrizeIndex",
+      "msg": "Invalid prize index"
+    },
+    {
+      "code": 6003,
+      "name": "NoPrize",
+      "msg": "No prize"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidCalculation",
+      "msg": "Invalid calculation"
+    },
+    {
+      "code": 6005,
+      "name": "NotEnoughTicketsLeft",
+      "msg": "Not enough tickets left"
+    },
+    {
+      "code": 6006,
+      "name": "RaffleStillRunning",
+      "msg": "Raffle is still running"
+    },
+    {
+      "code": 6007,
+      "name": "WinnersAlreadyDrawn",
+      "msg": "Winner already drawn"
+    },
+    {
+      "code": 6008,
+      "name": "WinnerNotDrawn",
+      "msg": "Winner not drawn"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidRevealedData",
+      "msg": "Invalid revealed data"
+    },
+    {
+      "code": 6010,
+      "name": "TokenAccountNotOwnedByWinner",
+      "msg": "Ticket account not owned by winner"
+    },
+    {
+      "code": 6011,
+      "name": "TicketHasNotWon",
+      "msg": "Ticket has not won"
+    },
+    {
+      "code": 6012,
+      "name": "UnclaimedPrizes",
+      "msg": "Unclaimed prizes"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidRecentBlockhashes",
+      "msg": "Invalid recent blockhashes"
+    },
+    {
+      "code": 6014,
+      "name": "OnlyCreatorCanClaimNoEntrantRafflePrizes",
+      "msg": "Only the creator can calin no entrant raffle prizes"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidTreasuryTokenAccountOwner",
+      "msg": "Invalid treasury token account owner"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidEntrantPubkey",
+      "msg": "Error parsing entrant pubkey"
+    }
+  ]
+};

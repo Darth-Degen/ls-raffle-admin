@@ -68,6 +68,27 @@ export type Expo = {
       ]
     },
     {
+      "name": "updateEndDate",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "endTimestamp",
+          "type": "i64"
+        }
+      ]
+    },
+    {
       "name": "addPrize",
       "accounts": [
         {
@@ -719,6 +740,27 @@ export const IDL: Expo = {
           "type": {
             "defined": "RaffleMode"
           }
+        }
+      ]
+    },
+    {
+      "name": "updateEndDate",
+      "accounts": [
+        {
+          "name": "raffle",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "endTimestamp",
+          "type": "i64"
         }
       ]
     },

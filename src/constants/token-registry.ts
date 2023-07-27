@@ -27,6 +27,15 @@ const tokenRegistry = {
     logoURI: 'https://www.arweave.net/6cZ-d9BnAsCqxkpzazYmKjLpUN2kE-jYnU3WDV4_lo0?ext=png',
     tags: []
   },
+  'karbon': {
+    chainId: 101,
+    address: 'KARBwJD2GcTrmdW1hXzA3a779Hx3MjyBYUGF9qvHyJX',
+    symbol: 'KARB',
+    name: 'KARB',
+    decimals: 0,
+    logoURI: 'https://www.arweave.net/6cZ-d9BnAsCqxkpzazYmKjLpUN2kE-jYnU3WDV4_lo0?ext=png',
+    tags: []
+  },
   'dust': {
     chainId: 101,
     address: 'FLTHudk5B5zag7JmGXqrYrFfey6otevLQA6jm1UHHLEE',

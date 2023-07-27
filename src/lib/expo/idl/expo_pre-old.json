@@ -68,27 +68,6 @@
       ]
     },
     {
-      "name": "updateEndDate",
-      "accounts": [
-        {
-          "name": "raffle",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "creator",
-          "isMut": false,
-          "isSigner": true
-        }
-      ],
-      "args": [
-        {
-          "name": "endTimestamp",
-          "type": "i64"
-        }
-      ]
-    },
-    {
       "name": "addPrize",
       "accounts": [
         {

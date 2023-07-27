@@ -30,6 +30,7 @@ import { executeTransaction, sendAndValidateTransaction } from "src/lib/transact
 import { tokenInfoMap } from "@constants";
 import { ExpoClient } from "src/lib/expo";
 import expoIdlJSON from "src/lib/expo/idl/expo.json";
+import { useRouter } from "next/router";
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -37,6 +38,7 @@ function sleep(ms: number) {
 
 const Home: NextPage = () => {
   const tokensKeys = [...tokenInfoMap.keys()];
+  const router = useRouter();
   const raffleModes = [RAFFLE_MODE_SINGLE_WINNER_LABEL, RAFFLE_MODE_MULTI_WINNERS_LABEL];
 
   //load & display modal
@@ -64,6 +66,9 @@ const Home: NextPage = () => {
   const [splMap, setSplMap] = useState<Map<string, any>>();
   const [selectedSpl, setSelectedSpl] = useState<any>();
 
+  const [newDate, setNewDate] = useState<any>();
+  const [raffleData, setRaffleData] = useState<any>();
+
   const [splAmountBatchOne, setSplAmountBatchOne] = useState<number>();
   const [splPrizesCountBatchOne, setSplPrizesCountBatchOne] = useState<number>();
 
@@ -76,6 +81,10 @@ const Home: NextPage = () => {
   const wallet = useWallet();
   const { publicKey, disconnect } = wallet;
   const { connection } = useConnection();
+
+  console.log('query params: ', router.query);
+  const { id } = router.query;
+  const raffleId = !!id ? new PublicKey(id!) : null;
 
   const expo = new ExpoClient(
     connection,
@@ -146,16 +155,8 @@ const Home: NextPage = () => {
 
   //create the raffle
   const handleCreateRaffle = async (): Promise<void> => {
-    if (!date) {
-      toast.error("Select End Date");
-      return;
-    }
-    if (!maxTickets || maxTickets < 1) {
-      toast.error("Add Max Tickets");
-      return;
-    }
-    if (!price || price < 0.001) {
-      toast.error("Add Ticket Price");
+    if (!raffleId) {
+      toast.error("Cannot load raffle");
       return;
     }
     // if (!confirmedToken.length) {
@@ -166,51 +167,18 @@ const Home: NextPage = () => {
     const toastId = toast.loading("Creating raffle...");
     setIsCreating(true);
 
-    const endTimestamp = new anchor.BN(moment(date).unix());
-    const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
+    // const endTimestamp = new anchor.BN(moment(date).unix());
+    // const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
+
     // TODO: update for use with multiple tokens instead of first instance
     // const nftMint = confirmedToken[0]?.mintAddress;
-    const nftMints = confirmedToken.map(token => token.mintAddress);
-    const splFinalAmount = splAmountBatchOne
-      ? new anchor.BN(splAmountBatchOne * Math.pow(10, selectedSpl.tokenAmount.decimals))
-      : new anchor.BN(0);
+
+    // const nftMints = confirmedToken.map(token => token.mintAddress);
+    // const splFinalAmount = splAmountBatchOne
+    //   ? new anchor.BN(splAmountBatchOne * Math.pow(10, selectedSpl.tokenAmount.decimals))
+    //   : new anchor.BN(0);
 
     try {
-      const { signers, instructions, raffle } = await expo.createRaffle(
-        new PublicKey(currency.address),
-        endTimestamp,
-        ticketPrice,
-        maxTickets,
-        nftMints,
-        // We don't create SPL prizes during raffle creation now
-        undefined, // selectedSpl ? selectedSpl.mint : undefined,
-        splFinalAmount,
-        raffleMode
-      );
-
-      console.log('Raffle ID: ', raffle.toBase58());
-
-      const status = await executeTransaction(
-        connection,
-        wallet,
-        instructions,
-        {
-          signers: [signers],
-        }
-      );
-
-      //@ts-ignore
-      if (status.value.err) {
-        console.warn("Tx status: ", status);
-        toast.error("An error occured. Please try again.");
-      } else {
-        toast.success("Raffle Created", {
-          id: toastId,
-        });
-      }
-
-      setShowConfirmModal(false);
-      setIsCreating(false);
 
       setIsAddingPrizes(true);
 
@@ -219,30 +187,37 @@ const Home: NextPage = () => {
       const additionalPrizesBatchTwo = Array(splPrizesCountBatchTwo).fill({ amount: splAmountBatchTwo });
       const additionalPrizesBatchThree = Array(splPrizesCountBatchThree).fill({ amount: splAmountBatchThree });
 
-      const additionalPrizes = [
+      let additionalPrizes = [
         ...additionalPrizesBatchOne,
         ...additionalPrizesBatchTwo,
         ...additionalPrizesBatchThree
-      ];
+      ].filter(prize => !!prize.amount);
 
       // console.log('additionalPrizes: ', additionalPrizes);
+      const raffleData = await expo.expoProgram.account.raffle.fetch(raffleId!);
+      console.log('Current index: ', raffleData);
 
       const additionalIxs: TransactionInstruction[] = [];
 
       // const raffledata = await expo.expoProgram.account.raffle.fetch(raffle.toBase58());
       // console.log('RTaffle: ', raffledata);
 
+      additionalPrizes = additionalPrizes.slice(raffleData.totalPrizes);
+      console.log("additionalPrizes: ", additionalPrizes);
+
       for await (let [index, splPrize] of additionalPrizes.entries()) {
+        index = index + raffleData.totalPrizes;
         const splPrizeMint = selectedSpl.mint;
         // console.log('prize index: ', index);
         const finalAmount = splPrize.amount * Math.pow(10, selectedSpl.tokenAmount.decimals);
         // console.log('finalAmount: ', finalAmount);
 
         const ix = await expo.addSplPrize(
-          signers.publicKey,
+          raffleId,
           new PublicKey(splPrizeMint),
           new anchor.BN(finalAmount),
-          index
+          index,
+          raffleId
         );
 
         additionalIxs.push(ix);
@@ -327,6 +302,32 @@ const Home: NextPage = () => {
     }
   };
 
+  const handleUpdateEndDate = async (): Promise<void> => {
+    const endTimestamp = new anchor.BN(moment(newDate).unix());
+
+    const ix = await expo.updateEndDate(
+      raffleId!,
+      endTimestamp
+    );
+    const latestBlockhash = await connection.getLatestBlockhash("finalized");
+
+    let messageV0 = new TransactionMessage({
+      payerKey: wallet.publicKey!,
+      recentBlockhash: latestBlockhash.blockhash,
+      instructions: [ix]
+    }).compileToV0Message();
+    const transactionv0 = new VersionedTransaction(messageV0);
+
+    const signedTransaction = await wallet.signTransaction!(transactionv0);
+
+    const res = await sendAndValidateTransaction(connection, signedTransaction, latestBlockhash);
+    if (res.value.err) {
+      console.log('Something went wrong');
+    } else {
+      console.log('Date updated');
+    }
+  }
+
   //handle nft selection
   const handleTokenSelect = (token: Metadata<JsonMetadata<string>>): void => {
     if (!token) return;
@@ -357,22 +358,6 @@ const Home: NextPage = () => {
 
   //confirm raffle creation
   const handleConfirmCreation = () => {
-    if (!date) {
-      toast.error("Select End Date");
-      return;
-    }
-    if (!maxTickets || maxTickets < 1) {
-      toast.error("Add Max Tickets");
-      return;
-    }
-    if (!price || price < 0.001) {
-      toast.error("Add Ticket Price");
-      return;
-    }
-    if (!confirmedToken) {
-      toast.error("Select NFT");
-      return;
-    }
     setShowConfirmModal(true);
   };
 
@@ -452,6 +437,15 @@ const Home: NextPage = () => {
   }, [getSPLTokens]);
 
   useEffect(() => {
+    if (raffleId) {
+      expo.expoProgram.account.raffle.fetch(raffleId!).then(raffle => {
+        setRaffleData(raffle);
+        console.log('raffle: ', raffle);
+      });
+    }
+  }, [raffleId]);
+
+  useEffect(() => {
     getTokens();
   }, [getTokens]);
 
@@ -485,76 +479,32 @@ const Home: NextPage = () => {
         {/* outter container */}
         <div className="relative flex flex-col gap-6 items-center justify-center pb-32 w-full">
           <h2 className="text-2xl pt-10 lg:pt-0">Enter Raffle Info</h2>
+          <h2 className="text-2xl pt-10 lg:pt-0">{raffleId?.toBase58()}</h2>
+          {!!raffleData &&
+            <h2 className="text-2xl pt-10 lg:pt-0">
+              {new Date(raffleData.endTimestamp.toNumber() * 1000).toLocaleString()}
+            </h2>
+          }
+
           {/* layout container */}
           <div className="flex flex-col lg:flex-row justify-start items-center gap-12 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
-            <SelectToken
-              handleClick={setShowTokenModal}
-              tokens={confirmedToken}
-            />
-            <div className="flex flex-col sm:flex-row items-start gap-10">
-              {/* fields 1 */}
-              <div className="relative flex flex-col gap-3 lg:gap-6 items-center lg:items-start justify-center w-full ">
-                <InputWrapper label="Select Currency">
-                  <Dropdown
-                    handleSelect={handleCurrency}
-                    setShowDropdown={setCurrencyDropdown}
-                    showDropdown={currencyDropdown}
-                    label={currency.symbol}
-                    items={[...tokenInfoMap.keys()]}
-                  />
-                </InputWrapper>
-                <InputWrapper label="Max Tickets">
-                  <NumberInput
-                    max={5000}
-                    handleInput={setMaxTickets}
-                    placeholder="5000"
-                  />
-                </InputWrapper>
-                <InputWrapper label="Ticket Price">
-                  <NumberInput
-                    max={10000}
-                    handleInput={setPrice}
-                    placeholder="0.1"
-                    useDecimals={true}
-                  />
-                </InputWrapper>
-                {/* Max Sales */}
-                <AnimatePresence mode="wait">
-                  {maxTickets && maxTickets > 0 && price && price > 0 && (
-                    <motion.div
-                      className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-teal-500 text-base w-full text-center whitespace-nowrap"
-                      key="total"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.1, ease: "easeInOut" }}
-                    >
-                      Max Sales - {(maxTickets * price).toLocaleString()}{" "}
-                      {currency.symbol}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              {/* fields 2 */}
-              <div className="relative flex flex-col gap-3 lg:gap-6 items-center lg:items-start justify-center w-full">
-                <InputWrapper label="End Date & Time">
-                  <DateTime
-                    inputProps={inputProps}
-                    isValidDate={isValidDate}
-                    onChange={(date) => setDate(date)}
-                  />
-                </InputWrapper>
-                <InputWrapper label="Raffle mode">
-                  <Dropdown
-                    handleSelect={handleRaffleMode}
-                    setShowDropdown={setRaffleModeDropdown}
-                    showDropdown={raffleModeDropdown}
-                    label={raffleModeLabel!}
-                    items={raffleModes}
-                  />
-                </InputWrapper>
-              </div>
+            <div className="relative flex flex-col gap-3 lg:gap-6 items-center lg:items-start justify-center w-full">
+              <InputWrapper label="End Date & Time">
+                <DateTime
+                  inputProps={inputProps}
+                  isValidDate={isValidDate}
+                  onChange={(date) => setNewDate(date)}
+                />
+              </InputWrapper>
             </div>
+
+            <Button
+              onClick={handleUpdateEndDate}
+              isLoading={isCreating}
+              loadText={"Creating Raffle"}
+            >
+              Update Raffle end date
+            </Button>
           </div>
           <div className="flex-row sm:flex-row gap-12 lg:gap-14 px-10 md:px-18 py-10 rounded bg-custom-dark-gray">
             <div className="relative flex flex-row gap-3 lg:gap-6 items-center lg:items-start justify-center w-full ">
@@ -640,7 +590,7 @@ const Home: NextPage = () => {
             Create Raffle
           </Button>
         </div>
-      </motion.div>
+      </motion.div >
       <TokenModal
         show={showTokenModal}
         setShow={setShowTokenModal}
@@ -652,10 +602,7 @@ const Home: NextPage = () => {
       />
       <ConfirmModal
         show={
-          showConfirmModal &&
-          maxTickets !== undefined &&
-          price !== undefined &&
-          confirmedToken !== undefined
+          showConfirmModal
         }
         setShow={setShowConfirmModal}
         isLoading={isCreating}
@@ -666,7 +613,7 @@ const Home: NextPage = () => {
         currency={currency.name}
         date={date}
       />
-    </PageLayout>
+    </PageLayout >
   );
 };
 

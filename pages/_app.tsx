@@ -43,7 +43,8 @@ const App = ({ Component, pageProps }: AppProps) => {
 
   // TODO @darth
   // Switch networks
-  const endpoint = "https://devnet.helius-rpc.com/?api-key=fd98bcfd-5344-4cc0-8ac1-db7ba9603613";
+  // const endpoint = "https://devnet.helius-rpc.com/?api-key=fd98bcfd-5344-4cc0-8ac1-db7ba9603613";
+  const endpoint = "https://mainnet.helius-rpc.com/?api-key=fd98bcfd-5344-4cc0-8ac1-db7ba9603613";
   // const endpoint = "https://rpc-devnet.hellomoon.io/3bd84347-2f2a-4be2-9653-bf99cce560c0";
   // const endpoint = "https://rpc.hellomoon.io/3bd84347-2f2a-4be2-9653-bf99cce560c0";
 
