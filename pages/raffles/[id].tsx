@@ -443,7 +443,7 @@ const Home: NextPage = () => {
         console.log('raffle: ', raffle);
       });
     }
-  }, [raffleId]);
+  }, []);
 
   useEffect(() => {
     getTokens();
