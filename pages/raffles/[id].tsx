@@ -481,6 +481,10 @@ const Home: NextPage = () => {
           <h2 className="text-2xl pt-10 lg:pt-0">Enter Raffle Info</h2>
           <h2 className="text-2xl pt-10 lg:pt-0">{raffleId?.toBase58()}</h2>
           {!!raffleData &&
+            <p>{raffleData.totalPrizes}</p>
+          }
+
+          {!!raffleData &&
             <h2 className="text-2xl pt-10 lg:pt-0">
               {new Date(raffleData.endTimestamp.toNumber() * 1000).toLocaleString()}
             </h2>
