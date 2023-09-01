@@ -157,10 +157,16 @@ const Home: NextPage = () => {
     const ticketPrice = new anchor.BN(price * Math.pow(10, currency.decimals));
     // TODO: update for use with multiple tokens instead of first instance
     // const nftMint = confirmedToken[0]?.mintAddress;
-    const nftMints = confirmedToken.map(token => token.mintAddress);
+    let nftMints = confirmedToken.map(token => token.mintAddress);
     const splFinalAmount = splAmount
       ? new anchor.BN(splAmount * Math.pow(10, selectedSpl.tokenAmount.decimals))
       : new anchor.BN(0);
+
+    // Limited to 12 for now
+    if (nftMints.length > 12) {
+      toast.error("Max 12 NFTs in a single raffle");
+      return;
+    }
 
     try {
       const { signers, instructions } = await expo.createRaffle(
@@ -174,10 +180,15 @@ const Home: NextPage = () => {
         raffleMode
       );
 
+      console.log('instructions: ', instructions);
+
+      let firstInstructionBatch = nftMints.length > 6 ? instructions.slice(0, 8) : instructions;
+      let secondInstructionBatch = nftMints.length > 6 ? instructions.slice(8) : null;
+
       const status = await executeTransaction(
         connection,
         wallet,
-        instructions,
+        firstInstructionBatch,
         {
           signers: [signers],
         }
@@ -192,6 +203,28 @@ const Home: NextPage = () => {
           id: toastId,
         });
       }
+
+      if (secondInstructionBatch) {
+        const status = await executeTransaction(
+          connection,
+          wallet,
+          secondInstructionBatch,
+          // {
+          // signers: [signers],
+          // }
+        );
+
+        //@ts-ignore
+        if (status.value.err) {
+          console.warn("Tx status: ", status);
+          toast.error("An error occured. Please try again.");
+        } else {
+          toast.success("Raffle Created", {
+            id: toastId,
+          });
+        }
+      }
+
       setShowConfirmModal(false);
       setIsCreating(false);
     } catch (e: unknown) {

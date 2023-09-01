@@ -206,6 +206,7 @@ export class ExpoClient {
         mintMetadata?.tokenStandard === TokenStandard.ProgrammableNonFungible &&
         mintMetadata.programmableConfig
       ) {
+        console.log('Add pNFT');
         //// PROGRAMMABLE ////
         addPrizeIxs.push(
           ComputeBudgetProgram.setComputeUnitLimit({
@@ -236,6 +237,7 @@ export class ExpoClient {
         addPrizeIxs.push(addPrizeIx);
 
       } else {
+        console.log('Add normal NFT');
         //// NON-PROGRAMMABLE ////
         const addPrizeIx = await this.expoProgram.methods.addPrize(prizeIndex, prizeAmount).accounts({
           raffle,
