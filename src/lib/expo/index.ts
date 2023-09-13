@@ -180,6 +180,8 @@ export class ExpoClient {
       allPrizes.push({ selectedSpl, splAmount });
     }
 
+    let hasComputeBoost = false;
+
     for await (let [index, nftMint] of allPrizes.entries()) {
       const prizeAmount = nftMint.splAmount ? splAmount : new anchor.BN(1);
       const prizeIndex = index;
@@ -206,13 +208,16 @@ export class ExpoClient {
         mintMetadata?.tokenStandard === TokenStandard.ProgrammableNonFungible &&
         mintMetadata.programmableConfig
       ) {
-        console.log('Add pNFT');
+        console.log('Add pNFT: ', nftMint.toBase58());
         //// PROGRAMMABLE ////
-        addPrizeIxs.push(
-          ComputeBudgetProgram.setComputeUnitLimit({
-            units: 100000000,
-          })
-        );
+        if (!hasComputeBoost) {
+          addPrizeIxs.push(
+            ComputeBudgetProgram.setComputeUnitLimit({
+              units: 100000000,
+            })
+          );
+        }
+        hasComputeBoost = true;
 
         const addPrizeIx = await this.expoProgram.methods.addPrizeProgrammable(prizeIndex, prizeAmount).accounts({
           raffle,
