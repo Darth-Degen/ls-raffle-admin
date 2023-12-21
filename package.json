@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.26.0",
+    "@ls-arkade/payments": "^0.1.12",
     "@metaplex-foundation/js": "^0.18.3",
     "@metaplex-foundation/mpl-token-auth-rules": "^1.1.0",
     "@metaplex-foundation/mpl-token-metadata": "^2.11.0",

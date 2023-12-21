@@ -40,15 +40,9 @@ const App = ({ Component, pageProps }: AppProps) => {
 
   // const endpoint = clusterApiUrl(network);
 
-  // const endpoint = "https://rpc-devnet.hellomoon.io/3bd84347-2f2a-4be2-9653-bf99cce560c0";
-  const endpoint =
-    "https://rpc.hellomoon.io/3bd84347-2f2a-4be2-9653-bf99cce560c0";
-  // const config = {
-  //   commitment: "confirmed" as Commitment,
-  //   httpHeaders: {
-  //     "Authorization": "Bearer 3bd84347-2f2a-4be2-9653-bf99cce560c0"
-  //   }
-  // };
+  const endpoint = "https://rpc-devnet.hellomoon.io/3bd84347-2f2a-4be2-9653-bf99cce560c0";
+  // const endpoint =
+  //   "https://rpc.hellomoon.io/3bd84347-2f2a-4be2-9653-bf99cce560c0";
 
   const wallets = useMemo(
     () => [
@@ -64,7 +58,6 @@ const App = ({ Component, pageProps }: AppProps) => {
     [network]
   );
   return (
-    // <ConnectionProvider endpoint={endpoint} config={config}>
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
