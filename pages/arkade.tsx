@@ -1,12 +1,14 @@
 import { NextPage } from "next";
 import { Button, PageLayout } from "src/components";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { midExitAnimation } from "src/constants";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useEffect, useState } from "react";
 import { deserializeCreatorsData, program, transactions } from "@ls-arkade/payments";
-import { Wallet } from "@coral-xyz/anchor";
-import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { PublicKey, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
+import axios from "axios";
+import { DAILY_POOL, MONTHLY_POOL, WEEKLY_POOL } from "@ls-arkade/payments/dist/constants";
+import toast from "react-hot-toast";
 
 const Arkade: NextPage = () => {
   const [dailyPoolAmount, setDailyPoolAmount] = useState<number | null>();
@@ -16,8 +18,16 @@ const Arkade: NextPage = () => {
   const [weeklyAddress, setWeeklyAddress] = useState<string | null>();
   const [monthlyAddress, setMonthlyAddress] = useState<string | null>();
 
+  const [dailyWinners, setDailyWinners] = useState<string[]>(); // pubkey
+  const [weeklyWinners, setWeeklyWinners] = useState<string[]>(); // pubkey
+  const [monthlyWinners, setMonthlyWinners] = useState<string[]>(); // pubkey
+
   const [isSendingDaily, setIsSendingDaily] = useState<boolean>(false);
+
   const DEVNET_WHEEL_OF_FATE_CONFIG_ADDRESS = "Gj2ptwThPbKJu6tGNCczT3rscrU8j4EFssicMdFmenq9";
+  const configAccountKey = new PublicKey(DEVNET_WHEEL_OF_FATE_CONFIG_ADDRESS);
+  const LEADERBOARD_URL = "https://api.libertysquare.io/arkade/leaderboards/e1a781c8-0801-412a-ace7-b7ddf5208265";
+  const Authorization = "Bearer 8def2e76-1769-497e-ac7b-47275eb9bac9";
 
   const wallet = useWallet();
   const { publicKey, disconnect } = wallet;
@@ -32,10 +42,23 @@ const Arkade: NextPage = () => {
     disconnect();
   };
 
-  const handleDailyDistribution = async () => {
+  const handleDailyDistribution = async (poolId: string, winners: string[]) => {
     setIsSendingDaily(true);
+    const distributeIx = await transactions.handlePoolDistribution(configAccountKey,
+      winners.map(k => new PublicKey(k)),
+      poolId,
+      lsPaymentsProgram
+    );
+    try {
+      const tx = await lsPaymentsProgram.provider.sendAndConfirm!(distributeIx);
+      console.log('tx: ', tx);
+      toast("Transaction sent successfuly");
+    } catch (e) {
+      toast("Error while sending transaction");
+    } finally {
+      setIsSendingDaily(false);
+    }
 
-    setIsSendingDaily(false);
   };
 
   useEffect(() => {
@@ -56,6 +79,14 @@ const Arkade: NextPage = () => {
       const dailyAmount = await lsPaymentsProgram.provider.connection.getBalance(creatorsList.creators[7].publicKey);
       const weeklyAmount = await lsPaymentsProgram.provider.connection.getBalance(creatorsList.creators[6].publicKey);
       const monthlyAmount = await lsPaymentsProgram.provider.connection.getBalance(creatorsList.creators[5].publicKey);
+
+      const leaderboard = await axios(LEADERBOARD_URL, { headers: { Authorization } });
+
+      console.log('leaderboard: ', leaderboard);
+
+      setDailyWinners(leaderboard.data.daily.slice(0, 5).map((winner: any) => winner.player.walletId));
+      setWeeklyWinners(leaderboard.data.weekly.slice(0, 5).map((winner: any) => winner.player.walletId));
+      setMonthlyWinners(leaderboard.data.monthly.slice(0, 5).map((winner: any) => winner.player.walletId));
 
       setDailyPoolAmount(dailyAmount / LAMPORTS_PER_SOL);
       setWeeklyPoolAmount(weeklyAmount / LAMPORTS_PER_SOL);
@@ -86,9 +117,16 @@ const Arkade: NextPage = () => {
               <div>
                 <p className="text-lg pt-10 pb-2 lg:pt-0">Distribute daily pool</p>
                 <p className="pb-2">Size: {dailyPoolAmount} SOL</p>
-                <p className="pb-2">Address: {dailyAddress}</p>
+                <p className="pb-2">Winners: </p>
+                <ul>
+                  {dailyWinners?.map(winner => {
+                    return <li>{winner}</li>
+                  })}
+                </ul>
+                <p></p>
+                <p className="pb-2 pt-2">Address:<br />{dailyAddress}</p>
                 <Button
-                  onClick={handleDailyDistribution}
+                  onClick={() => handleDailyDistribution(DAILY_POOL, dailyWinners!)}
                   isLoading={isSendingDaily}
                   loadText={"Creating Raffle"}
                 >
@@ -98,9 +136,15 @@ const Arkade: NextPage = () => {
               <div>
                 <p className="text-lg pt-10 pb-2 lg:pt-0">Distribute monthly pool</p>
                 <p className="pb-2">Size: {weeklyPoolAmount} SOL</p>
-                <p className="pb-2">Address: {weeklyAddress}</p>
+                <p className="pb-2">Winners: </p>
+                <ol>
+                  {weeklyWinners?.map(winner => {
+                    return <li>{winner}</li>
+                  })}
+                </ol>
+                <p className="pb-2 pt-2">Address:<br />{weeklyAddress}</p>
                 <Button
-                  onClick={handleDailyDistribution}
+                  onClick={() => handleDailyDistribution(WEEKLY_POOL, weeklyWinners!)}
                   isLoading={isSendingDaily}
                   loadText={"Creating Raffle"}
                 >
@@ -112,9 +156,15 @@ const Arkade: NextPage = () => {
               <div>
                 <p className="text-lg pt-10 pb-2 lg:pt-0">Distribute weekly pool</p>
                 <p className="pb-2">Size: {monthlyPoolAmount} SOL</p>
-                <p className="pb-2">Address: {monthlyAddress}</p>
+                <p className="pb-2">Winners: </p>
+                <ul>
+                  {weeklyWinners?.map(winner => {
+                    return <li>{winner}</li>
+                  })}
+                </ul>
+                <p className="pb-2 pt-2">Address:<br />{monthlyAddress}</p>
                 <Button
-                  onClick={handleDailyDistribution}
+                  onClick={() => handleDailyDistribution(MONTHLY_POOL, monthlyWinners!)}
                   isLoading={isSendingDaily}
                   loadText={"Creating Raffle"}
                 >
