@@ -23,6 +23,8 @@ const Arkade: NextPage = () => {
   const [monthlyWinners, setMonthlyWinners] = useState<string[]>(); // pubkey
 
   const [isSendingDaily, setIsSendingDaily] = useState<boolean>(false);
+  const [isSendingWeekly, setIsSendingWeekly] = useState<boolean>(false);
+  const [isSendingMonthly, setIsSendingMonthly] = useState<boolean>(false);
 
   const DEVNET_WHEEL_OF_FATE_CONFIG_ADDRESS = "Gj2ptwThPbKJu6tGNCczT3rscrU8j4EFssicMdFmenq9";
   const configAccountKey = new PublicKey(DEVNET_WHEEL_OF_FATE_CONFIG_ADDRESS);
@@ -36,6 +38,14 @@ const Arkade: NextPage = () => {
   // @ts-ignore
   const lsPaymentsProgram = program(connection, wallet);
 
+  function togglePoolLoadingState(poolId: string) {
+    switch (poolId) {
+      case DAILY_POOL: { setIsSendingDaily(!isSendingDaily); break; }
+      case WEEKLY_POOL: { setIsSendingWeekly(!isSendingWeekly); break; }
+      case MONTHLY_POOL: { setIsSendingMonthly(!isSendingMonthly); break; }
+    }
+  }
+
   // Disconnect wallet
   const handleDisconnect = (): void => {
     sessionStorage.clear();
@@ -43,21 +53,25 @@ const Arkade: NextPage = () => {
   };
 
   const handleDailyDistribution = async (poolId: string, winners: string[]) => {
-    setIsSendingDaily(true);
+    togglePoolLoadingState(poolId);
+
     const distributeIx = await transactions.handlePoolDistribution(configAccountKey,
-      winners.map(k => new PublicKey(k)),
+      winners.map(k => {
+        console.log('winner:', k);
+        return new PublicKey(k.toString())
+      }),
       poolId,
       lsPaymentsProgram
     );
     try {
       const tx = await lsPaymentsProgram.provider.sendAndConfirm!(distributeIx);
       console.log('tx: ', tx);
-      toast("Transaction sent successfuly");
+      toast.success("Transaction sent successfuly");
     } catch (e) {
-      toast("Error while sending transaction");
-    } finally {
-      setIsSendingDaily(false);
+      console.error('Error while sending tx: ', e);
+      toast.error("Error while sending transaction");
     }
+    togglePoolLoadingState(poolId);
 
   };
 
@@ -128,7 +142,7 @@ const Arkade: NextPage = () => {
                 <Button
                   onClick={() => handleDailyDistribution(DAILY_POOL, dailyWinners!)}
                   isLoading={isSendingDaily}
-                  loadText={"Creating Raffle"}
+                  loadText={"Distributing..."}
                 >
                   Distribute daily
                 </Button>
@@ -145,8 +159,8 @@ const Arkade: NextPage = () => {
                 <p className="pb-2 pt-2">Address:<br />{weeklyAddress}</p>
                 <Button
                   onClick={() => handleDailyDistribution(WEEKLY_POOL, weeklyWinners!)}
-                  isLoading={isSendingDaily}
-                  loadText={"Creating Raffle"}
+                  isLoading={isSendingWeekly}
+                  loadText={"Distributing..."}
                 >
                   Distribute monthly
                 </Button>
@@ -165,8 +179,8 @@ const Arkade: NextPage = () => {
                 <p className="pb-2 pt-2">Address:<br />{monthlyAddress}</p>
                 <Button
                   onClick={() => handleDailyDistribution(MONTHLY_POOL, monthlyWinners!)}
-                  isLoading={isSendingDaily}
-                  loadText={"Creating Raffle"}
+                  isLoading={isSendingMonthly}
+                  loadText={"Distributing..."}
                 >
                   Distribute weekly
                 </Button>
