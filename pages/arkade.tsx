@@ -26,7 +26,7 @@ const Arkade: NextPage = () => {
   const [isSendingWeekly, setIsSendingWeekly] = useState<boolean>(false);
   const [isSendingMonthly, setIsSendingMonthly] = useState<boolean>(false);
 
-  const DEVNET_WHEEL_OF_FATE_CONFIG_ADDRESS = "Gj2ptwThPbKJu6tGNCczT3rscrU8j4EFssicMdFmenq9";
+  const DEVNET_WHEEL_OF_FATE_CONFIG_ADDRESS = "Gj2ptwThPbKJu6tGNCczT3rscrU8j4EFssicMdFmenq9"; // "36eNfZk2FXeCsDo5FnpSi11aHZ4W1xgCSB5a9zV3fQmU";
   const configAccountKey = new PublicKey(DEVNET_WHEEL_OF_FATE_CONFIG_ADDRESS);
   const LEADERBOARD_URL = "https://api.libertysquare.io/arkade/leaderboards/e1a781c8-0801-412a-ace7-b7ddf5208265";
   const Authorization = "Bearer 8def2e76-1769-497e-ac7b-47275eb9bac9";
