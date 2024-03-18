@@ -133,8 +133,8 @@ const Arkade: NextPage = () => {
                 <p className="pb-2">Size: {dailyPoolAmount} SOL</p>
                 <p className="pb-2">Winners: </p>
                 <ul>
-                  {dailyWinners?.map(winner => {
-                    return <li>{winner}</li>
+                  {dailyWinners?.map((winner, index) => {
+                    return <li key={index}>{winner}</li>
                   })}
                 </ul>
                 <p></p>
@@ -152,8 +152,8 @@ const Arkade: NextPage = () => {
                 <p className="pb-2">Size: {weeklyPoolAmount} SOL</p>
                 <p className="pb-2">Winners: </p>
                 <ol>
-                  {weeklyWinners?.map(winner => {
-                    return <li>{winner}</li>
+                  {weeklyWinners?.map((winner, index) => {
+                    return <li key={index}>{winner}</li>
                   })}
                 </ol>
                 <p className="pb-2 pt-2">Address:<br />{weeklyAddress}</p>
@@ -172,8 +172,8 @@ const Arkade: NextPage = () => {
                 <p className="pb-2">Size: {monthlyPoolAmount} SOL</p>
                 <p className="pb-2">Winners: </p>
                 <ul>
-                  {weeklyWinners?.map(winner => {
-                    return <li>{winner}</li>
+                  {weeklyWinners?.map((winner, index) => {
+                    return <li key={index}>{winner}</li>
                   })}
                 </ul>
                 <p className="pb-2 pt-2">Address:<br />{monthlyAddress}</p>
