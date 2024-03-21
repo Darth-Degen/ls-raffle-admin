@@ -26,6 +26,8 @@ const Arkade: NextPage = () => {
   const [isSendingWeekly, setIsSendingWeekly] = useState<boolean>(false);
   const [isSendingMonthly, setIsSendingMonthly] = useState<boolean>(false);
 
+  const [amountGamesPlayed, setAmountGamesPlayed] = useState<any>();
+
   const DEVNET_WHEEL_OF_FATE_CONFIG_ADDRESS = "36eNfZk2FXeCsDo5FnpSi11aHZ4W1xgCSB5a9zV3fQmU";
   const configAccountKey = new PublicKey(DEVNET_WHEEL_OF_FATE_CONFIG_ADDRESS);
   const LEADERBOARD_URL = "https://api.libertysquare.io/arkade/leaderboards/e1a781c8-0801-412a-ace7-b7ddf5208265";
@@ -52,14 +54,11 @@ const Arkade: NextPage = () => {
     disconnect();
   };
 
-  const handleDailyDistribution = async (poolId: string, winners: string[]) => {
+  const handleDistribution = async (poolId: string, winners: string[]) => {
     togglePoolLoadingState(poolId);
 
     const distributeIx = await transactions.handlePoolDistribution(configAccountKey,
-      winners.map(k => {
-        console.log('winner:', k);
-        return new PublicKey(k.toString())
-      }),
+      winners.map(k => new PublicKey(k.toString())),
       poolId,
       lsPaymentsProgram
     );
@@ -74,6 +73,13 @@ const Arkade: NextPage = () => {
     togglePoolLoadingState(poolId);
 
   };
+
+  useEffect(() => {
+    axios(LEADERBOARD_URL, { headers: { Authorization } }).then(async (json) => {
+      const { analytics } = json.data;
+      setAmountGamesPlayed(analytics)
+    });
+  });
 
   useEffect(() => {
     (async () => {
@@ -126,6 +132,8 @@ const Arkade: NextPage = () => {
         <div className="relative flex flex-col gap-6 items-center justify-center pb-32 w-full">
           <h2 className="text-2xl pt-10 lg:pt-0">Arkade pools distribution</h2>
 
+          <p>Games played: {amountGamesPlayed ? amountGamesPlayed : "Loading..."}</p>
+
           <div className="flex flex-col sm:flex-row gap-10">
             <div className="relative flex flex-col gap-3 lg:gap-6 items-center lg:items-start justify-center w-full">
               <div>
@@ -140,7 +148,7 @@ const Arkade: NextPage = () => {
                 <p></p>
                 <p className="pb-2 pt-2">Address:<br />{dailyAddress}</p>
                 <Button
-                  onClick={() => handleDailyDistribution(DAILY_POOL, dailyWinners!)}
+                  onClick={() => handleDistribution(DAILY_POOL, dailyWinners!)}
                   isLoading={isSendingDaily}
                   loadText={"Distributing..."}
                 >
@@ -149,16 +157,16 @@ const Arkade: NextPage = () => {
               </div>
               <div>
                 <p className="text-lg pt-10 pb-2 lg:pt-0">Distribute monthly pool</p>
-                <p className="pb-2">Size: {weeklyPoolAmount} SOL</p>
+                <p className="pb-2">Size: {monthlyPoolAmount} SOL</p>
                 <p className="pb-2">Winners: </p>
                 <ol>
-                  {weeklyWinners?.map((winner, index) => {
+                  {monthlyWinners?.map((winner, index) => {
                     return <li key={index}>{winner}</li>
                   })}
                 </ol>
                 <p className="pb-2 pt-2">Address:<br />{weeklyAddress}</p>
                 <Button
-                  onClick={() => handleDailyDistribution(WEEKLY_POOL, weeklyWinners!)}
+                  onClick={() => handleDistribution(MONTHLY_POOL, weeklyWinners!)}
                   isLoading={isSendingWeekly}
                   loadText={"Distributing..."}
                 >
@@ -169,7 +177,7 @@ const Arkade: NextPage = () => {
             <div className="relative flex flex-col gap-3 lg:gap-6 items-center lg:items-start justify-start w-full">
               <div>
                 <p className="text-lg pt-10 pb-2 lg:pt-0">Distribute weekly pool</p>
-                <p className="pb-2">Size: {monthlyPoolAmount} SOL</p>
+                <p className="pb-2">Size: {weeklyPoolAmount} SOL</p>
                 <p className="pb-2">Winners: </p>
                 <ul>
                   {weeklyWinners?.map((winner, index) => {
@@ -178,7 +186,7 @@ const Arkade: NextPage = () => {
                 </ul>
                 <p className="pb-2 pt-2">Address:<br />{monthlyAddress}</p>
                 <Button
-                  onClick={() => handleDailyDistribution(MONTHLY_POOL, monthlyWinners!)}
+                  onClick={() => handleDistribution(WEEKLY_POOL, monthlyWinners!)}
                   isLoading={isSendingMonthly}
                   loadText={"Distributing..."}
                 >
